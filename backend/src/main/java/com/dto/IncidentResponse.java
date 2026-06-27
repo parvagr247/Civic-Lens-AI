@@ -23,6 +23,7 @@ public class IncidentResponse {
     private String severity;
     private GeoLocation location;
     private String imageUrl;
+    private Boolean anonymous;
     private Long createdAt;
     private Long updatedAt;
 
@@ -42,6 +43,7 @@ public class IncidentResponse {
                 .severity(incident.getSeverity() != null ? incident.getSeverity().name() : null)
                 .location(incident.getLocation())
                 .imageUrl(incident.getImageUrl())
+                .anonymous(incident.getAnonymous())
                 .createdAt(incident.getCreatedAt())
                 .updatedAt(incident.getUpdatedAt())
                 .build();

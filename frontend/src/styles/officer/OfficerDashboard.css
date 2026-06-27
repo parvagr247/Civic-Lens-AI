@@ -1,0 +1,23 @@
+/* Officer Dashboard specific styles */
+
+.officer-dashboard {
+  animation: fade-in 0.4s ease-out;
+}
+
+.assignment-detail-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.assignment-detail-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 16px 28px -12px rgba(0, 0, 0, 0.6), 0 0 20px -5px rgba(59, 130, 246, 0.03);
+}
+
+.chat-bubble-officer {
+  border-radius: 12px 12px 0 12px;
+}
+
+.chat-bubble-dispatcher {
+  border-radius: 12px 12px 12px 0;
+}

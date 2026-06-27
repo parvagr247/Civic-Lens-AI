@@ -6,6 +6,8 @@ package com.model;
 public enum IncidentStatus {
     REPORTED,
     UNDER_REVIEW,
+    INVESTIGATING,
+    IN_PROGRESS,
     ASSIGNED,
     RESOLVED
 }

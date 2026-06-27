@@ -1,18 +1,24 @@
 package com.configuration;
 
+import com.security.JwtAuthenticationFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 /**
  * Spring Security configuration.
- * Configures stateless session management, routes, and allows integration of future JWT filters.
+ * Configures stateless session management, BCrypt hashing, JWT filters, and role-based route access controls.
  */
 @Slf4j
 @Configuration
@@ -20,9 +26,23 @@ import org.springframework.web.cors.CorsConfigurationSource;
 public class SecurityConfiguration {
 
     private final CorsConfigurationSource corsConfigurationSource;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfiguration(CorsConfigurationSource corsConfigurationSource) {
+    public SecurityConfiguration(
+            CorsConfigurationSource corsConfigurationSource,
+            JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.corsConfigurationSource = corsConfigurationSource;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 
     @Bean
@@ -34,7 +54,7 @@ public class SecurityConfiguration {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Allow public access to health and developer diagnostic endpoints
+                // Allow public access to health, swagger docs, and auth registration/login
                 .requestMatchers(
                     "/api/health",
                     "/api/version",
@@ -42,11 +62,28 @@ public class SecurityConfiguration {
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
-                    "/api/issues/**"
+                    "/api/auth/**"
                 ).permitAll()
-                // Require authentication for all other production endpoints (e.g. issues analysis, copilot)
+                // Restrict Admin dashboard operations and risk listings to ROLE_ADMIN
+                .requestMatchers(
+                    "/api/dashboard/admin",
+                    "/api/risk/high",
+                    "/api/issues/*/risk/reanalyze"
+                ).hasAuthority("ROLE_ADMIN")
+                // Citizens require authenticated access to report and view details
+                .requestMatchers(
+                    "/api/issues/**",
+                    "/api/dashboard/user",
+                    "/api/profile/**",
+                    "/api/leaderboard/**",
+                    "/api/achievements/**",
+                    "/api/risk/statistics"
+                ).authenticated()
                 .anyRequest().authenticated()
             );
+
+        // Bind the JWT filter to check Bearer tokens on each request
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -70,6 +70,37 @@ public class GeminiService {
     }
 
     /**
+     * Executes a text-based LLM completion using the Gemini ChatClient.
+     *
+     * @param promptText The structured prompt text.
+     * @return Clean JSON string response.
+     */
+    public String callTextModel(String promptText) {
+        log.info("Gemini Service: Initiating text analysis request.");
+
+        // Fallback to mock JSON if API key is not configured
+        if ("mock-gemini-key".equalsIgnoreCase(apiKey)) {
+            log.warn("Gemini API Key is set to default mock key. Returning a mock risk JSON response for local testing.");
+            return getMockRiskJson();
+        }
+
+        try {
+            log.info("Sending text prompt to Gemini ChatClient...");
+            String response = chatClient.prompt()
+                    .user(promptText)
+                    .call()
+                    .content();
+
+            log.info("Successfully received text response from Gemini ChatClient.");
+            log.debug("Raw Gemini Response: {}", response);
+            return cleanJsonResponse(response);
+        } catch (Exception e) {
+            log.error("Failed to execute Gemini Text API call", e);
+            throw new AIException("Failed to analyze text using Gemini: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Cleans markdown blocks (e.g. ```json ... ```) wrapping the returned JSON payload.
      */
     private String cleanJsonResponse(String response) {
@@ -97,6 +128,31 @@ public class GeminiService {
                 "  \"confidence\": 0.94,\n" +
                 "  \"recommendedAction\": \"Clean debris, seal surrounding joints, and patch with heavy asphalt mix.\",\n" +
                 "  \"reasoning\": \"The pothole is deep with visible base deterioration, posing an immediate hazard to traffic.\"\n" +
+                "}";
+    }
+
+    private String getMockRiskJson() {
+        return "{\n" +
+                "  \"overallRiskScore\": 78,\n" +
+                "  \"severity\": \"MAJOR\",\n" +
+                "  \"urgency\": \"WITHIN_24_HOURS\",\n" +
+                "  \"confidence\": 0.92,\n" +
+                "  \"priority\": \"P2\",\n" +
+                "  \"threatLevel\": \"HIGH\",\n" +
+                "  \"estimatedResolutionTime\": \"24 Hours\",\n" +
+                "  \"affectedPopulation\": 650,\n" +
+                "  \"affectedDepartments\": [\"Public Works\", \"Traffic Management\"],\n" +
+                "  \"potentialEscalation\": \"High vehicle impact could expand the depression, cracking adjacent subgrade pavement and causing a collapse.\",\n" +
+                "  \"publicSafetyImpact\": \"High hazard to cyclists and sudden braking from drivers, potentially leading to rear-end collisions.\",\n" +
+                "  \"infrastructureImpact\": \"Localized asphalt wearing and aggregate displacement down to road base course layers.\",\n" +
+                "  \"environmentalImpact\": \"Water retention within pothole could accelerate subgrade erosion during rainy conditions.\",\n" +
+                "  \"accessibilityImpact\": \"Pedestrian and visual warnings are required as wheelchair ramps could be obstructed by sudden repair diversions.\",\n" +
+                "  \"reasoning\": \"The reported issue is located in an active traffic lane with high traffic volume (100+ vehicles/min) and severe surface damage.\",\n" +
+                "  \"recommendations\": [\n" +
+                "    \"Erect warning pylons and safety signs around the hazard area.\",\n" +
+                "    \"Deploy emergency cold patch repair within 24 hours.\",\n" +
+                "    \"Schedule full lane resurfacing during the next local utility maintenance window.\"\n" +
+                "  ]\n" +
                 "}";
     }
 }

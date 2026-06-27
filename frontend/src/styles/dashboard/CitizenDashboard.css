@@ -1,0 +1,18 @@
+/* Citizen Dashboard specific styles */
+
+.dashboard-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(16, 185, 129, 0.05);
+}
+
+.dashboard-xp-text-shadow {
+  text-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+}
+
+.dashboard-chart-bar-glow {
+  filter: drop-shadow(0 2px 6px rgba(16, 185, 129, 0.2));
+}

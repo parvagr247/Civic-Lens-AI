@@ -1,0 +1,23 @@
+/* Admin Dashboard specific styles */
+
+.admin-stats-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-stats-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(59, 130, 246, 0.05);
+}
+
+.admin-recommendation-alert {
+  animation: border-pulse 2s infinite alternate;
+}
+
+@keyframes border-pulse {
+  0% {
+    border-color: rgba(16, 185, 129, 0.1);
+  }
+  100% {
+    border-color: rgba(16, 185, 129, 0.4);
+  }
+}

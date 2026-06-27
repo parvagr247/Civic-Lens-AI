@@ -1,0 +1,15 @@
+/* Auth Component specific styles */
+
+.auth-container {
+  background: radial-gradient(circle at center, rgba(16, 185, 129, 0.06) 0%, rgba(59, 130, 246, 0.06) 100%);
+}
+
+.auth-glow-card {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 50px -10px rgba(16, 185, 129, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.auth-input-focus:focus {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}

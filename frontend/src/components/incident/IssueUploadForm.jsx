@@ -7,6 +7,7 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { createIncident } from '../../services/issueService';
 import { getIncidentAnalysis } from '../../services/analysisService';
+import { getRiskByIncidentId } from '../../services/riskService';
 
 /**
  * IssueUploadForm component.
@@ -17,6 +18,7 @@ export default function IssueUploadForm({ onAnalysisSuccess }) {
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState({ latitude: '', longitude: '', address: '' });
   const [imageFile, setImageFile] = useState(null);
+  const [anonymous, setAnonymous] = useState(false);
 
   // Status and loading states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,6 +68,10 @@ export default function IssueUploadForm({ onAnalysisSuccess }) {
     formData.append('latitude', location.latitude);
     formData.append('longitude', location.longitude);
     formData.append('address', location.address);
+    formData.append('anonymous', anonymous);
+
+    let analyzeTimeout;
+    let reportTimeout;
 
     try {
       // 1. Submit form with upload progress tracking
@@ -74,37 +80,38 @@ export default function IssueUploadForm({ onAnalysisSuccess }) {
         if (percent === 100) {
           // Transition to saving state once upload is fully transmitted
           setCurrentStep('SAVE');
+
+          // Simulate step states while the backend processes the AI analysis
+          analyzeTimeout = setTimeout(() => {
+            setCurrentStep('ANALYZE');
+          }, 2000);
+
+          reportTimeout = setTimeout(() => {
+            setCurrentStep('REPORT');
+          }, 6500);
         }
       });
 
-      // Simulate step states during backend AI processing delay (keeps user context alive)
-      setTimeout(() => {
-        setCurrentStep('ANALYZE');
-      }, 1000);
+      // Clear pending timeouts and finalize step state
+      clearTimeout(analyzeTimeout);
+      clearTimeout(reportTimeout);
+      setCurrentStep('REPORT');
 
-      setTimeout(() => {
-        setCurrentStep('REPORT');
-      }, 2500);
-
-      // Fetch the generated AI analysis
+      // Fetch the generated AI analysis and risk assessment immediately
       const incident = response.data;
+      const [analysisResponse, riskResponse] = await Promise.all([
+        getIncidentAnalysis(incident.id),
+        getRiskByIncidentId(incident.id)
+      ]);
       
-      setTimeout(async () => {
-        try {
-          const analysisResponse = await getIncidentAnalysis(incident.id);
-          const analysis = analysisResponse.data;
-          
-          setIsSubmitting(false);
-          // Pass results back to page container
-          onAnalysisSuccess(incident, analysis);
-        } catch (err) {
-          console.error('Failed to retrieve analysis report', err);
-          setErrorMessage(err.message || 'Image uploaded, but failed to fetch AI analysis results.');
-          setIsSubmitting(false);
-        }
-      }, 4000);
-
+      const analysis = analysisResponse.data;
+      const risk = riskResponse.data;
+      
+      setIsSubmitting(false);
+      onAnalysisSuccess(incident, analysis, risk);
     } catch (err) {
+      clearTimeout(analyzeTimeout);
+      clearTimeout(reportTimeout);
       console.error('Submission failed', err);
       setErrorMessage(err.message || 'Failed to submit incident. Please check details and try again.');
       setIsSubmitting(false);
@@ -188,6 +195,22 @@ export default function IssueUploadForm({ onAnalysisSuccess }) {
           address={location.address}
           onChange={handleLocationChange}
         />
+
+        {/* Anonymous checkbox */}
+        <div 
+          onClick={() => setAnonymous(!anonymous)}
+          className="flex items-center gap-2.5 cursor-pointer py-1.5 select-none"
+        >
+          <input 
+            type="checkbox" 
+            checked={anonymous} 
+            onChange={() => {}} 
+            className="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-0 cursor-pointer"
+          />
+          <span className="text-xs text-slate-350 font-semibold">
+            Report Anonymously (Hide your identity from public social feeds)
+          </span>
+        </div>
 
         {/* Submit */}
         <div className="pt-4 border-t border-slate-800 flex justify-end">

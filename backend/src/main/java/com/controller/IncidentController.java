@@ -7,9 +7,14 @@ import com.dto.AnalysisResponse;
 import com.exception.ResourceNotFoundException;
 import com.model.Incident;
 import com.model.IncidentAnalysis;
+import com.model.User;
 import com.repository.IncidentAnalysisRepository;
 import com.repository.IncidentRepository;
+import com.repository.UserFirestoreRepository;
+import com.service.GamificationService;
+import com.service.IncidentService;
 import com.workflow.IssueAnalysisWorkflow;
+import com.workflow.RiskAssessmentWorkflow;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -29,20 +34,32 @@ import java.util.stream.Collectors;
 public class IncidentController {
 
     private final IssueAnalysisWorkflow analysisWorkflow;
+    private final RiskAssessmentWorkflow riskAssessmentWorkflow;
     private final IncidentRepository incidentRepository;
     private final IncidentAnalysisRepository analysisRepository;
+    private final IncidentService incidentService;
+    private final GamificationService gamificationService;
+    private final UserFirestoreRepository userRepository;
 
     public IncidentController(
             IssueAnalysisWorkflow analysisWorkflow,
+            RiskAssessmentWorkflow riskAssessmentWorkflow,
             IncidentRepository incidentRepository,
-            IncidentAnalysisRepository analysisRepository) {
+            IncidentAnalysisRepository analysisRepository,
+            IncidentService incidentService,
+            GamificationService gamificationService,
+            UserFirestoreRepository userRepository) {
         this.analysisWorkflow = analysisWorkflow;
+        this.riskAssessmentWorkflow = riskAssessmentWorkflow;
         this.incidentRepository = incidentRepository;
         this.analysisRepository = analysisRepository;
+        this.incidentService = incidentService;
+        this.gamificationService = gamificationService;
+        this.userRepository = userRepository;
     }
 
     /**
-     * Registers a new civic incident and triggers Gemini Vision AI workflow.
+     * Registers a new civic incident, triggers Gemini Vision AI, and chains risk analysis.
      * Accepts multipart/form-data.
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -51,6 +68,26 @@ public class IncidentController {
         log.info("REST: Received request to report a new incident: '{}'", request.getTitle());
         
         IncidentResponse response = analysisWorkflow.processAndAnalyze(request);
+
+        // Chain the RiskAssessmentWorkflow sequentially
+        try {
+            riskAssessmentWorkflow.assessIncidentRisk(response.getId());
+            log.info("Workflow chaining: Successfully executed risk assessment for incident {}", response.getId());
+        } catch (Exception e) {
+            log.error("Workflow chaining warning: Failed to assess risk for incident {}", response.getId(), e);
+        }
+
+        // Chain the Gamification points allocation
+        try {
+            String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userRepository.findByEmail(email);
+            if (user != null) {
+                gamificationService.rewardPoints(user.getId(), "REPORT_FILED", response.getId());
+                log.info("Gamification: Points rewarded successfully to citizen: {}", user.getEmail());
+            }
+        } catch (Exception e) {
+            log.warn("Gamification warning: Failed to reward points to reporter: {}", e.getMessage());
+        }
         
         ApiResponse<IncidentResponse> apiResponse = ApiResponse.success(
                 response, 
@@ -66,11 +103,7 @@ public class IncidentController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<IncidentResponse>>> getAllIncidents() {
         log.info("REST: Received request to list all incidents.");
-        List<Incident> incidents = incidentRepository.findAll();
-        
-        List<IncidentResponse> responseList = incidents.stream()
-                .map(IncidentResponse::fromEntity)
-                .collect(Collectors.toList());
+        List<IncidentResponse> responseList = incidentService.getAllIncidents();
 
         ApiResponse<List<IncidentResponse>> apiResponse = ApiResponse.success(
                 responseList, 
@@ -78,6 +111,22 @@ public class IncidentController {
                 HttpStatus.OK.value()
         );
         return ResponseEntity.ok(apiResponse);
+    }
+
+    /**
+     * Updates the status of an incident. Exposes PATCH /api/issues/{id}/status.
+     */
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<IncidentResponse>> updateStatus(
+            @PathVariable String id,
+            @RequestParam String status) {
+        log.info("REST: Received request to update status of incident {} to {}", id, status);
+        IncidentResponse response = incidentService.updateIncidentStatus(id, status);
+        return ResponseEntity.ok(ApiResponse.success(
+                response,
+                "Incident status updated successfully.",
+                HttpStatus.OK.value()
+        ));
     }
 
     /**

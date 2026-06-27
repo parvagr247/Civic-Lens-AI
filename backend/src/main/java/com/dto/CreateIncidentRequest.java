@@ -37,4 +37,6 @@ public class CreateIncidentRequest {
 
     @NotNull(message = "Incident image is required.")
     private MultipartFile image;
+
+    private Boolean anonymous = false;
 }

@@ -22,6 +22,8 @@ public class Incident {
     private SeverityLevel severity;
     private GeoLocation location;
     private String imageUrl;
+    private String reportedBy; // Email of the citizen who filed the report
+    private Boolean anonymous;
     private Long createdAt;
     private Long updatedAt;
 }

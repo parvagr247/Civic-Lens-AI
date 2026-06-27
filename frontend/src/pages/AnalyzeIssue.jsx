@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { PageHeader } from '../components/ui/PageHeader';
 import IssueUploadForm from '../components/incident/IssueUploadForm';
 import AnalysisCard from '../components/incident/AnalysisCard';
+import RiskCard from '../components/incident/RiskCard';
+import TimelineCard from '../components/incident/TimelineCard';
+import ReasoningCard from '../components/incident/ReasoningCard';
+import RecommendationPanel from '../components/incident/RecommendationPanel';
 import { Button } from '../components/ui/Button';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { useToast } from '../components/ui/ToastProvider';
@@ -15,16 +19,19 @@ export default function AnalyzeIssue() {
   // Completed result states
   const [reportedIncident, setReportedIncident] = useState(null);
   const [analysisReport, setAnalysisReport] = useState(null);
+  const [riskReport, setRiskReport] = useState(null);
 
-  const handleAnalysisSuccess = (incident, analysis) => {
+  const handleAnalysisSuccess = (incident, analysis, risk) => {
     setReportedIncident(incident);
     setAnalysisReport(analysis);
-    toast('AI analysis completed successfully!', 'success');
+    setRiskReport(risk);
+    toast('AI analysis and Risk assessment completed!', 'success');
   };
 
   const handleReset = () => {
     setReportedIncident(null);
     setAnalysisReport(null);
+    setRiskReport(null);
   };
 
   return (
@@ -52,12 +59,41 @@ export default function AnalyzeIssue() {
       {/* Main Container */}
       <div className="w-full">
         {reportedIncident && analysisReport ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="flex items-center gap-2 p-3 bg-emerald-950/20 border border-emerald-900/40 text-emerald-400 rounded-xl text-xs font-semibold animate-fade-in max-w-max">
               <Sparkles size={14} className="animate-pulse" />
-              <span>AI Diagnostics Generated successfully. Parent Incident Status updated to Under Review.</span>
+              <span>AI Diagnostics and Risk Assessment generated successfully. Status: Under Review.</span>
             </div>
-            <AnalysisCard incident={reportedIncident} analysis={analysisReport} />
+
+            {/* horizontal progress timeline */}
+            <TimelineCard 
+              incident={reportedIncident} 
+              analysis={analysisReport} 
+              risk={riskReport} 
+            />
+
+            {/* AI Vision Analysis details card */}
+            <AnalysisCard 
+              incident={reportedIncident} 
+              analysis={analysisReport} 
+            />
+
+            {/* Risk details grid */}
+            {riskReport && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <div className="lg:col-span-5">
+                  <RiskCard 
+                    risk={riskReport} 
+                    onReanalyzeUpdate={setRiskReport} 
+                  />
+                </div>
+                <div className="lg:col-span-7 space-y-6">
+                  <ReasoningCard risk={riskReport} />
+                  <RecommendationPanel recommendations={riskReport.recommendations} />
+                </div>
+              </div>
+            )}
+
           </div>
         ) : (
           <IssueUploadForm onAnalysisSuccess={handleAnalysisSuccess} />

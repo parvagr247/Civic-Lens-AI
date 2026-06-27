@@ -72,6 +72,16 @@ public class IssueAnalysisWorkflow {
                 request.getAddress()
         );
 
+                String reportedBy = "anonymous@civiclens.gov";
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+                reportedBy = auth.getName();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract authenticated email during issue creation");
+        }
+
         Incident incident = Incident.builder()
                 .id(incidentId)
                 .title(request.getTitle())
@@ -81,6 +91,8 @@ public class IssueAnalysisWorkflow {
                 .severity(SeverityLevel.MEDIUM) // Default until prioritized
                 .location(location)
                 .imageUrl(imageUrl)
+                .reportedBy(reportedBy)
+                .anonymous(request.getAnonymous())
                 .createdAt(System.currentTimeMillis())
                 .updatedAt(System.currentTimeMillis())
                 .build();

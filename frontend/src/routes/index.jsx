@@ -1,45 +1,83 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import GlobalLayout from '../components/layout/GlobalLayout';
-import Dashboard from '../pages/Dashboard';
+import CitizenDashboard from '../pages/CitizenDashboard';
+import AdminDashboard from '../pages/AdminDashboard';
+import OfficerDashboard from '../pages/OfficerDashboard';
 import AnalyzeIssue from '../pages/AnalyzeIssue';
 import CityIntelligence from '../pages/CityIntelligence';
+import RiskDashboard from '../pages/RiskDashboard';
 import AICopilot from '../pages/AICopilot';
 import Settings from '../pages/Settings';
 import NotFound from '../pages/NotFound';
+import Login from '../pages/Login';
+import Register from '../pages/Register';
+import CommunityFeed from '../pages/CommunityFeed';
 
-/**
- * Placeholder Guard component for Route Protection.
- * In later stages, this will validate user identity and JWT status.
- */
-const ProtectedRoutePlaceholder = ({ children }) => {
-  const isAuthenticated = true; // Placeholder: auto-approves for now.
-  
-  if (!isAuthenticated) {
-    console.warn('[Route Guard] Unauthenticated access blocked. Redirecting to login...');
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-};
+// Route Guards
+import ProtectedRoute from './ProtectedRoute';
+import AdminRoute from './AdminRoute';
+import GuestRoute from './GuestRoute';
+import OfficerRoute from './OfficerRoute';
 
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Primary layout wrapper for the platform dashboard */}
+      {/* Guest Only Routes (Login/Register) */}
+      <Route
+        path="/login"
+        element={
+          <GuestRoute>
+            <Login />
+          </GuestRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <GuestRoute>
+            <Register />
+          </GuestRoute>
+        }
+      />
+
+      {/* Main App Layout Wrapper */}
       <Route
         path="/"
         element={
-          <ProtectedRoutePlaceholder>
+          <ProtectedRoute>
             <GlobalLayout />
-          </ProtectedRoutePlaceholder>
+          </ProtectedRoute>
         }
       >
-        <Route index element={<Dashboard />} />
+        {/* Citizen Dashboards & Pages */}
+        <Route index element={<CitizenDashboard />} />
         <Route path="analyze" element={<AnalyzeIssue />} />
+        <Route path="feed" element={<CommunityFeed />} />
         <Route path="intelligence" element={<CityIntelligence />} />
+        <Route path="risk-intelligence" element={<RiskDashboard />} />
         <Route path="copilot" element={<AICopilot />} />
         <Route path="settings" element={<Settings />} />
+
+        {/* Admin Dashboard Page (requires Admin authorization) */}
+        <Route
+          path="admin-dashboard"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+
+        {/* Officer Dashboard Page (requires Officer authorization) */}
+        <Route
+          path="officer-dashboard"
+          element={
+            <OfficerRoute>
+              <OfficerDashboard />
+            </OfficerRoute>
+          }
+        />
       </Route>
 
       {/* Fallback routes */}
