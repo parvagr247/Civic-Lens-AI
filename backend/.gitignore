@@ -1,0 +1,70 @@
+# ==============================================================================
+# CivicLens AI - Backend GitIgnore Exclusions
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Build and Package Artifacts
+# ------------------------------------------------------------------------------
+target/
+*.releaseBackup
+pom.xml.releaseBackup
+pom.xml.tagRecove
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ------------------------------------------------------------------------------
+# 2. Sensitive Credentials and Configurations (CRITICAL)
+# ------------------------------------------------------------------------------
+src/main/resources/firebase-service-account.json
+src/main/resources/*-service-account.json
+src/main/resources/firebase.json
+src/main/resources/credentials.json
+src/main/resources/secrets.json
+
+# Environment variables
+.env
+.env.*
+
+# Local/Secret properties profiles
+src/main/resources/application-local.yml
+src/main/resources/application-dev.yml
+src/main/resources/application-secret.yml
+src/main/resources/application-local.properties
+src/main/resources/application-dev.properties
+src/main/resources/application-secret.properties
+
+# ------------------------------------------------------------------------------
+# 3. IDE Metadata and Configurations
+# ------------------------------------------------------------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+
+# ------------------------------------------------------------------------------
+# 4. Logs and Temporary Files
+# ------------------------------------------------------------------------------
+*.log
+logs/
+temp/
+tmp/
+
+# ------------------------------------------------------------------------------
+# 5. OS-Specific Metadata
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

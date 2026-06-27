@@ -1,0 +1,18 @@
+#!/bin/sh
+# Lightweight Maven Wrapper for Unix systems
+
+MAVEN_VERSION="3.9.6"
+MAVEN_HOME="$HOME/.m2/wrapper/apache-maven-$MAVEN_VERSION"
+MAVEN_ZIP="/tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+MAVEN_URL="https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+
+if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
+    echo "Maven Wrapper: Downloading Maven $MAVEN_VERSION..."
+    mkdir -p "$HOME/.m2/wrapper"
+    curl -L "$MAVEN_URL" -o "$MAVEN_ZIP"
+    tar -xzf "$MAVEN_ZIP" -C "$HOME/.m2/wrapper"
+    rm "$MAVEN_ZIP"
+    chmod +x "$MAVEN_HOME/bin/mvn"
+fi
+
+exec "$MAVEN_HOME/bin/mvn" "$@"

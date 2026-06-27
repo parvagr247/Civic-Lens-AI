@@ -1,0 +1,130 @@
+import React, { useRef, useState } from 'react';
+import { UploadCloud, XCircle, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { validateImageFile } from '../../services/uploadService';
+
+/**
+ * ImageUploader component.
+ * Allows drag-and-drop or file system selection of incident photos with immediate validation and thumbnail preview.
+ */
+export default function ImageUploader({ selectedFile, onFileSelect, onFileRemove }) {
+  const [dragActive, setDragActive] = useState(false);
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    processSelectedFile(file);
+  };
+
+  const processSelectedFile = (file) => {
+    if (!file) return;
+
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setError(validation.error);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setError(null);
+    onFileSelect(file);
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const file = e.dataTransfer.files?.[0];
+    processSelectedFile(file);
+  };
+
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleRemove = (e) => {
+    e.stopPropagation();
+    setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    onFileRemove();
+  };
+
+  return (
+    <div className="w-full">
+      <label className="block text-sm font-medium text-slate-300 mb-2">
+        Upload Incident Photo <span className="text-emerald-400">*</span>
+      </label>
+
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-rose-400 bg-rose-950/40 border border-rose-900/60 p-3 rounded-lg mb-3 animate-fade-in">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <div
+        className={`relative group cursor-pointer border-2 border-dashed rounded-xl transition-all duration-300 flex flex-col items-center justify-center p-6 ${
+          selectedFile
+            ? 'border-emerald-500/50 bg-emerald-950/10'
+            : dragActive
+            ? 'border-emerald-500 bg-emerald-950/20 scale-[0.99]'
+            : 'border-slate-700 bg-slate-900/40 hover:border-slate-600 hover:bg-slate-900/60'
+        }`}
+        onDragEnter={handleDrag}
+        onDragOver={handleDrag}
+        onDragLeave={handleDrag}
+        onDrop={handleDrop}
+        onClick={triggerFileSelect}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".jpg,.jpeg,.png,.webp"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
+        {selectedFile ? (
+          <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-slate-700 aspect-video flex items-center justify-center bg-slate-950">
+            <img
+              src={URL.createObjectURL(selectedFile)}
+              alt="Preview"
+              className="max-w-full max-h-full object-contain"
+            />
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="absolute top-2 right-2 p-1.5 bg-slate-950/80 hover:bg-rose-600 text-slate-300 hover:text-white rounded-full transition-all duration-200"
+            >
+              <XCircle size={18} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="p-3 bg-slate-800/60 rounded-full text-slate-400 group-hover:text-slate-300 group-hover:scale-105 transition-all duration-300 mb-3">
+              <UploadCloud size={28} />
+            </div>
+            <p className="text-slate-300 font-medium mb-1">
+              Drag & drop your image here, or <span className="text-emerald-400 hover:underline">browse</span>
+            </p>
+            <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+              <ImageIcon size={12} />
+              Supports JPG, JPEG, PNG, WEBP (Max 10MB)
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
