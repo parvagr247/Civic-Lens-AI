@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { addComment } from '../../services/collaborationService';
 import { ThumbsUp, Reply, Send, Loader2 } from 'lucide-react';
 import { useToast } from '../ui/ToastProvider';
@@ -10,6 +11,7 @@ import '../../styles/comments/Comments.css';
  * Recursively renders Reddit-style threaded comments and nested replies.
  */
 export default function CommentsList({ comments, incidentId, onCommentAdded, onCommentLiked, parentId = null, depth = 0 }) {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const [replyingCommentId, setReplyingCommentId] = useState(null);
@@ -50,26 +52,31 @@ export default function CommentsList({ comments, incidentId, onCommentAdded, onC
         return (
           <div 
             key={comment.id} 
-            className="comment-node-container pl-2 border-l border-slate-800/80" 
+            className="comment-node-container pl-2 border-l border-slate-200 dark:border-slate-800/80" 
             style={{ marginLeft: depth > 0 ? '12px' : '0px' }}
           >
             {/* Comment details */}
             <div className="space-y-1">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold text-slate-200">{comment.userName}</span>
+                <span 
+                  onClick={() => navigate(`/profile/${comment.userId}`)}
+                  className="text-[10px] font-bold text-slate-800 dark:text-slate-200 cursor-pointer hover:underline hover:text-emerald-500 transition-colors"
+                >
+                  {comment.userName}
+                </span>
                 <span className="text-[8px] text-slate-500 font-mono">
                   {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
               
-              <p className="text-[11px] text-slate-350 leading-relaxed pl-1">{comment.content}</p>
+              <p className="text-[11px] text-slate-650 dark:text-slate-350 leading-relaxed pl-1">{comment.content}</p>
 
               {/* Action Buttons */}
               <div className="flex items-center gap-3 text-[9px] font-bold text-slate-500 pl-1 pt-0.5">
                 <button 
                   onClick={() => onCommentLiked(comment.id)}
                   className={`flex items-center gap-1 transition-colors duration-200 ${
-                    hasLiked ? 'text-emerald-400' : 'hover:text-slate-300'
+                    hasLiked ? 'text-emerald-500 dark:text-emerald-400' : 'hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
                 >
                   <ThumbsUp size={10} />
@@ -81,7 +88,7 @@ export default function CommentsList({ comments, incidentId, onCommentAdded, onC
                     setReplyingCommentId(replyingCommentId === comment.id ? null : comment.id);
                     setReplyText('');
                   }}
-                  className="flex items-center gap-1 hover:text-slate-300 transition-colors duration-200"
+                  className="flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300 transition-colors duration-200"
                 >
                   <Reply size={10} />
                   <span>Reply</span>
@@ -97,7 +104,7 @@ export default function CommentsList({ comments, incidentId, onCommentAdded, onC
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Post nested reply..."
-                  className="flex-1 bg-slate-950/60 border border-slate-850 rounded-lg px-2.5 py-1.5 text-[10px] text-slate-200 focus:outline-none focus:border-emerald-500/50"
+                  className="flex-1 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-850 rounded-lg px-2.5 py-1.5 text-[10px] text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500/50"
                   autoFocus
                 />
                 <button

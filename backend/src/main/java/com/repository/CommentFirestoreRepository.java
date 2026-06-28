@@ -54,4 +54,26 @@ public class CommentFirestoreRepository extends BaseFirestoreRepository<Comment>
             throw new FirebaseException("Failed to read incident comments", e);
         }
     }
+
+    /**
+     * Lists comments submitted by a specific user.
+     */
+    public List<Comment> findByUserId(String userId) {
+        try {
+            com.google.cloud.firestore.QuerySnapshot snapshot = firestore.collection(collectionName)
+                    .whereEqualTo("userId", userId)
+                    .get()
+                    .get();
+
+            List<Comment> list = new ArrayList<>();
+            for (com.google.cloud.firestore.QueryDocumentSnapshot document : snapshot.getDocuments()) {
+                list.add(document.toObject(Comment.class));
+            }
+            list.sort((c1, c2) -> Long.compare(c2.getCreatedAt(), c1.getCreatedAt()));
+            return list;
+        } catch (Exception e) {
+            log.error("Firestore Error: Failed to query comments for user: {}", userId, e);
+            throw new FirebaseException("Failed to read user comments", e);
+        }
+    }
 }

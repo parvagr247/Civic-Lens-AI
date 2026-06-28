@@ -7,7 +7,7 @@ import com.dto.IncidentResponse;
 import com.dto.AnalysisResponse;
 import com.repository.IncidentAnalysisRepository;
 import com.repository.IncidentRepository;
-import com.service.FirebaseStorageService;
+import com.service.StorageService;
 import com.service.GeminiService;
 import com.util.PromptBuilder;
 import com.exception.AIException;
@@ -30,7 +30,7 @@ import java.util.UUID;
 @Component
 public class IssueAnalysisWorkflow {
 
-    private final FirebaseStorageService storageService;
+    private final StorageService storageService;
     private final IncidentRepository incidentRepository;
     private final IncidentAnalysisRepository analysisRepository;
     private final GeminiService geminiService;
@@ -38,7 +38,7 @@ public class IssueAnalysisWorkflow {
     private final ObjectMapper objectMapper;
 
     public IssueAnalysisWorkflow(
-            FirebaseStorageService storageService,
+            StorageService storageService,
             IncidentRepository incidentRepository,
             IncidentAnalysisRepository analysisRepository,
             GeminiService geminiService,
@@ -63,7 +63,9 @@ public class IssueAnalysisWorkflow {
         log.info("Starting IssueAnalysisWorkflow process for new Incident ID: {}", incidentId);
 
         // 1. Upload image to Firebase Storage
-        String imageUrl = storageService.uploadIncidentImage(request.getImage(), incidentId);
+        StorageService.ImageUploadResult uploadResult = storageService.uploadIncidentImage(request.getImage(), incidentId);
+        String imageUrl = uploadResult.getDownloadUrl();
+        String imagePath = uploadResult.getStoragePath();
 
         // 2. Persist initial Incident record
         GeoLocation location = new GeoLocation(
@@ -91,6 +93,7 @@ public class IssueAnalysisWorkflow {
                 .severity(SeverityLevel.MEDIUM) // Default until prioritized
                 .location(location)
                 .imageUrl(imageUrl)
+                .imagePath(imagePath)
                 .reportedBy(reportedBy)
                 .anonymous(request.getAnonymous())
                 .createdAt(System.currentTimeMillis())

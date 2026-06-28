@@ -56,22 +56,32 @@ public class DashboardServiceImpl implements DashboardService {
             throw new ResourceNotFoundException("Citizen profile not found for User ID: " + userId);
         }
 
-        // 2. Fetch and assign dynamic rank positions
+        // 2. Fetch all users and role map to separate citizens from staff
+        List<User> allUsers = userRepository.findAll();
+        Map<String, UserRole> userRoles = allUsers.stream()
+                .filter(u -> u.getId() != null)
+                .collect(Collectors.toMap(User::getId, User::getRole, (r1, r2) -> r1));
+
+        // 3. Fetch and assign dynamic rank positions based on ROLE_USER only
         List<CitizenProfile> rankedProfiles = profileRepository.findAllSortedByPoints();
-        int userRank = 1;
-        for (int i = 0; i < rankedProfiles.size(); i++) {
-            if (rankedProfiles.get(i).getUserId().equalsIgnoreCase(userId)) {
+        List<CitizenProfile> citizenOnlyProfiles = rankedProfiles.stream()
+                .filter(p -> userRoles.get(p.getUserId()) == UserRole.ROLE_USER)
+                .collect(Collectors.toList());
+
+        int userRank = 0;
+        for (int i = 0; i < citizenOnlyProfiles.size(); i++) {
+            if (citizenOnlyProfiles.get(i).getUserId().equalsIgnoreCase(userId)) {
                 userRank = i + 1;
                 break;
             }
         }
-        if (profile.getRank() != userRank) {
+        if (userRank > 0 && profile.getRank() != userRank) {
             profile.setRank(userRank);
             profileRepository.save(profile); // Update cache
         }
 
-        // 3. Map leaderboard top 3 podium entries
-        List<LeaderboardEntry> podium = rankedProfiles.stream()
+        // 4. Map leaderboard top 3 podium entries
+        List<LeaderboardEntry> podium = citizenOnlyProfiles.stream()
                 .limit(3)
                 .map(p -> LeaderboardEntry.builder()
                         .userId(p.getUserId())
@@ -79,10 +89,32 @@ public class DashboardServiceImpl implements DashboardService {
                         .avatarUrl(p.getAvatarUrl())
                         .level(p.getLevel())
                         .points(p.getPoints())
-                        .rank(rankedProfiles.indexOf(p) + 1)
+                        .rank(citizenOnlyProfiles.indexOf(p) + 1)
                         .reportsSubmitted(p.getReportsSubmitted())
                         .reportsResolved(p.getReportsResolved())
                         .build())
+                .collect(Collectors.toList());
+
+        // 5. Map separate administrative team section
+        List<LeaderboardEntry> adminTeam = rankedProfiles.stream()
+                .filter(p -> {
+                    UserRole role = userRoles.get(p.getUserId());
+                    return role == UserRole.ROLE_ADMIN || role == UserRole.ROLE_OFFICER;
+                })
+                .map(p -> {
+                    UserRole role = userRoles.get(p.getUserId());
+                    String levelStr = (role == UserRole.ROLE_ADMIN) ? "Administrator" : "Field Officer";
+                    return LeaderboardEntry.builder()
+                            .userId(p.getUserId())
+                            .name(p.getName())
+                            .avatarUrl(p.getAvatarUrl())
+                            .level(levelStr)
+                            .points(p.getPoints())
+                            .rank(0)
+                            .reportsSubmitted(p.getReportsSubmitted())
+                            .reportsResolved(p.getReportsResolved())
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         // 4. Fetch personal reported incidents vs nearby issues
@@ -156,6 +188,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .recentReports(recentReports)
                 .nearbyIssues(nearbyIssues)
                 .leaderboardPreview(podium)
+                .administrativeTeam(adminTeam)
                 .achievementsPreview(achievementsPreview)
                 .activityTimeline(activityTimeline)
                 .weeklyActivity(weeklyActivity)

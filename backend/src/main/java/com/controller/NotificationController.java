@@ -49,4 +49,40 @@ public class NotificationController {
                 HttpStatus.OK.value()
         ));
     }
+
+    @PostMapping("/{id}/read")
+    public ResponseEntity<ApiResponse<Void>> markAsRead(@org.springframework.web.bind.annotation.PathVariable String id, Authentication authentication) {
+        String email = authentication.getName();
+        log.info("REST: Mark notification {} read for {}", id, email);
+        notificationService.markAsRead(email, id);
+
+        return ResponseEntity.ok(ApiResponse.success(
+                "Notification marked read.",
+                HttpStatus.OK.value()
+        ));
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteNotification(@org.springframework.web.bind.annotation.PathVariable String id, Authentication authentication) {
+        String email = authentication.getName();
+        log.info("REST: Delete notification {} for {}", id, email);
+        notificationService.deleteNotification(email, id);
+
+        return ResponseEntity.ok(ApiResponse.success(
+                "Notification deleted successfully.",
+                HttpStatus.OK.value()
+        ));
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> deleteAllNotifications(Authentication authentication) {
+        String email = authentication.getName();
+        log.info("REST: Delete all notifications for {}", email);
+        notificationService.deleteAllNotifications(email);
+
+        return ResponseEntity.ok(ApiResponse.success(
+                "All notifications deleted successfully.",
+                HttpStatus.OK.value()
+        ));
+    }
 }

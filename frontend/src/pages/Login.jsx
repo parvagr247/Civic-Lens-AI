@@ -37,8 +37,10 @@ export default function Login() {
         // Redirect to appropriate dashboard
         if (response.data.role === 'ROLE_ADMIN') {
           navigate('/admin-dashboard');
+        } else if (response.data.role === 'ROLE_OFFICER') {
+          navigate('/officer-dashboard');
         } else {
-          navigate('/');
+          navigate('/dashboard');
         }
       }
     } catch (err) {

@@ -43,8 +43,10 @@ export default function Register() {
         toast('Account registered successfully!', 'success');
         if (response.data.role === 'ROLE_ADMIN') {
           navigate('/admin-dashboard');
+        } else if (response.data.role === 'ROLE_OFFICER') {
+          navigate('/officer-dashboard');
         } else {
-          navigate('/');
+          navigate('/dashboard');
         }
       }
     } catch (err) {

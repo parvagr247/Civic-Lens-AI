@@ -22,8 +22,14 @@ public class Incident {
     private SeverityLevel severity;
     private GeoLocation location;
     private String imageUrl;
+    private String imagePath;
     private String reportedBy; // Email of the citizen who filed the report
     private Boolean anonymous;
+    private Integer reopenCount;
+    private String citizenFeedback;
+    private String citizenReopenPhotoUrl;
+    private String trackingId; // e.g. CL-2026-X8392
+    private Long closedAt;
     private Long createdAt;
     private Long updatedAt;
 }

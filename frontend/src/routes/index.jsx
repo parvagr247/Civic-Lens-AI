@@ -13,6 +13,13 @@ import NotFound from '../pages/NotFound';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import CommunityFeed from '../pages/CommunityFeed';
+import ReportDetails from '../pages/ReportDetails';
+import DepartmentDashboard from '../pages/DepartmentDashboard';
+import AIInsightsDashboard from '../pages/AIInsightsDashboard';
+import AnonymousTracker from '../pages/AnonymousTracker';
+import ModerationDashboard from '../pages/ModerationDashboard';
+import Landing from '../pages/Landing';
+import Profile from '../pages/Profile';
 
 // Route Guards
 import ProtectedRoute from './ProtectedRoute';
@@ -42,6 +49,10 @@ const AppRoutes = () => {
       />
 
       {/* Main App Layout Wrapper */}
+      {/* Public Landing Page */}
+      <Route path="/" element={<Landing />} />
+
+      {/* Main App Layout Wrapper */}
       <Route
         path="/"
         element={
@@ -51,13 +62,15 @@ const AppRoutes = () => {
         }
       >
         {/* Citizen Dashboards & Pages */}
-        <Route index element={<CitizenDashboard />} />
+        <Route path="dashboard" element={<CitizenDashboard />} />
         <Route path="analyze" element={<AnalyzeIssue />} />
         <Route path="feed" element={<CommunityFeed />} />
         <Route path="intelligence" element={<CityIntelligence />} />
         <Route path="risk-intelligence" element={<RiskDashboard />} />
         <Route path="copilot" element={<AICopilot />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="incidents/:id" element={<ReportDetails />} />
+        <Route path="profile/:userId" element={<Profile />} />
 
         {/* Admin Dashboard Page (requires Admin authorization) */}
         <Route
@@ -65,6 +78,30 @@ const AppRoutes = () => {
           element={
             <AdminRoute>
               <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="departments"
+          element={
+            <AdminRoute>
+              <DepartmentDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="ai-insights"
+          element={
+            <AdminRoute>
+              <AIInsightsDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="moderation"
+          element={
+            <AdminRoute>
+              <ModerationDashboard />
             </AdminRoute>
           }
         />
@@ -78,6 +115,14 @@ const AppRoutes = () => {
             </OfficerRoute>
           }
         />
+      </Route>
+
+      {/* Public Layout Wrapper */}
+      <Route
+        path="/"
+        element={<GlobalLayout />}
+      >
+        <Route path="track" element={<AnonymousTracker />} />
       </Route>
 
       {/* Fallback routes */}

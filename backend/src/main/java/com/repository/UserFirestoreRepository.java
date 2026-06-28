@@ -26,6 +26,10 @@ public class UserFirestoreRepository extends BaseFirestoreRepository<User> {
         super.save(user.getId(), user);
     }
 
+    public List<User> findAll() {
+        return super.findAll(User.class);
+    }
+
     public User findById(String id) {
         return super.findById(id, User.class);
     }

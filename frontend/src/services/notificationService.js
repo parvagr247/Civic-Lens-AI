@@ -11,3 +11,15 @@ export const getNotifications = () => {
 export const markAllAsRead = () => {
   return api.post('/api/notifications/read');
 };
+
+export const markAsRead = (id) => {
+  return api.post(`/api/notifications/${id}/read`);
+};
+
+export const deleteNotification = (id) => {
+  return api.delete(`/api/notifications/${id}`);
+};
+
+export const deleteAllNotifications = () => {
+  return api.delete('/api/notifications');
+};

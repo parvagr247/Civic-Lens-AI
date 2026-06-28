@@ -54,7 +54,7 @@ public class SecurityConfiguration {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Allow public access to health, swagger docs, and auth registration/login
+                // Allow public access to health, swagger docs, auth, anonymous tracking, and dev seeds
                 .requestMatchers(
                     "/api/health",
                     "/api/version",
@@ -62,22 +62,24 @@ public class SecurityConfiguration {
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
-                    "/api/auth/**"
+                    "/api/auth/**",
+                    "/api/issues/anonymous/**",
+                    "/api/issues/track/**",
+                    "/api/dev/seed"
                 ).permitAll()
-                // Restrict Admin dashboard operations and risk listings to ROLE_ADMIN
+                // Restrict Admin dashboard operations and re-analysis to ROLE_ADMIN
                 .requestMatchers(
                     "/api/dashboard/admin",
-                    "/api/risk/high",
                     "/api/issues/*/risk/reanalyze"
                 ).hasAuthority("ROLE_ADMIN")
-                // Citizens require authenticated access to report and view details
+                // Citizens require authenticated access to report and view details, statistics, and risk indicators
                 .requestMatchers(
                     "/api/issues/**",
                     "/api/dashboard/user",
                     "/api/profile/**",
                     "/api/leaderboard/**",
                     "/api/achievements/**",
-                    "/api/risk/statistics"
+                    "/api/risk/**"
                 ).authenticated()
                 .anyRequest().authenticated()
             );

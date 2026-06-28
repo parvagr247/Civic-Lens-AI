@@ -6,19 +6,22 @@ import {
   TrendingUp, 
   Bot, 
   Settings, 
-  ShieldAlert, 
   LogOut, 
   Users, 
+  User,
   ChevronDown, 
   ChevronRight,
-  ShieldAlert as ShieldIcon
+  ChevronLeft,
+  Shield,
+  ShieldAlert,
+  Menu
 } from 'lucide-react';
 import { getCurrentUser, isAdmin, isOfficer, logout } from '../../services/authService';
 import '../../styles/layout/Sidebar.css';
 
 /**
  * Sidebar navigation component.
- * Features Collapsible groups, sticky page viewports, and role-based links.
+ * Features Collapsible groups, sticky page viewports, role-based links, and collapsed (icon-only) state.
  */
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -31,99 +34,168 @@ const Sidebar = () => {
   const [openOfficer, setOpenOfficer] = useState(true);
   const [openAdmin, setOpenAdmin] = useState(true);
 
-  const handleLogout = async () => {
-    // Triggers confirmation inside header or directly logout for simplicity
-    await logout();
-    navigate('/login');
-  };
+  // Sidebar minimized state
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <aside className="w-64 border-r border-slate-800 bg-[#070b19]/40 flex-shrink-0 hidden md:flex flex-col justify-between h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto">
-      <nav className="flex flex-col gap-3 p-4">
+    <aside 
+      className={`border-r border-slate-200 dark:border-slate-800 bg-[#f8fafc]/80 dark:bg-[#070b19]/80 flex-shrink-0 hidden md:flex flex-col justify-between h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto transition-all duration-300 ${
+        collapsed ? 'w-16' : 'w-64'
+      }`}
+    >
+      <nav className="flex flex-col gap-3 p-3">
         
+        {/* Collapse toggle row */}
+        <div className="flex items-center justify-between px-2 py-1.5 border-b border-slate-200/50 dark:border-slate-850/50 shrink-0">
+          {!collapsed && (
+            <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              Workspace
+            </span>
+          )}
+          <button 
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-850 text-slate-500 dark:text-slate-400 transition-colors mx-auto md:mx-0"
+            title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
+        </div>
+
         {/* GROUP 1: Citizen Workspace */}
         {user && !isUserAdmin && !isUserOfficer && (
           <div className="space-y-1">
-            <button 
-              onClick={() => setOpenCitizen(!openCitizen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-350 transition-colors"
-            >
-              <span>Citizen Workspace</span>
-              {openCitizen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            </button>
+            {!collapsed ? (
+              <button 
+                onClick={() => setOpenCitizen(!openCitizen)}
+                className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-350 transition-colors"
+              >
+                <span>Citizen Hub</span>
+                {openCitizen ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+              </button>
+            ) : (
+              <div className="h-[1px] bg-slate-200 dark:bg-slate-850 my-2" />
+            )}
 
-            {openCitizen && (
-              <div className="space-y-1 pl-1">
+            {(openCitizen || collapsed) && (
+              <div className="space-y-1">
                 <NavLink
-                  to="/"
+                  to="/dashboard"
+                  title="Dashboard"
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
-                    }`
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
                   }
                 >
-                  <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
-                  <span>Dashboard</span>
+                  <LayoutDashboard className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Dashboard</span>}
+                </NavLink>
+
+                <NavLink
+                  to={`/profile/${user?.userId}`}
+                  title="My Profile"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
+                  }
+                >
+                  <User className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>My Profile</span>}
                 </NavLink>
 
                 <NavLink
                   to="/analyze"
+                  title="Report Issue"
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
-                    }`
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
                   }
                 >
-                  <FileUp className="w-3.5 h-3.5 shrink-0" />
-                  <span>Report Issue</span>
+                  <FileUp className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Report Issue</span>}
+                </NavLink>
+
+                <NavLink
+                  to="/track"
+                  title="Anonymous Tracking"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
+                  }
+                >
+                  <ShieldAlert className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Anonymous Tracking</span>}
                 </NavLink>
 
                 <NavLink
                   to="/feed"
+                  title="Community Feed"
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
-                    }`
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
                   }
                 >
-                  <Users className="w-3.5 h-3.5 shrink-0" />
-                  <span>Community Feed</span>
+                  <Users className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Community Feed</span>}
                 </NavLink>
 
                 <NavLink
                   to="/intelligence"
+                  title="City Intelligence"
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
-                    }`
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
                   }
                 >
-                  <TrendingUp className="w-3.5 h-3.5 shrink-0" />
-                  <span>City Intelligence</span>
+                  <TrendingUp className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>City Intelligence</span>}
                 </NavLink>
 
                 <NavLink
                   to="/risk-intelligence"
+                  title="Risk Intelligence"
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
-                    }`
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
                   }
                 >
-                  <ShieldIcon className="w-3.5 h-3.5 shrink-0" />
-                  <span>Risk Intelligence</span>
+                  <Shield className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Risk Intelligence</span>}
                 </NavLink>
 
                 <NavLink
                   to="/copilot"
+                  title="AI Copilot"
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
-                    }`
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
                   }
                 >
-                  <Bot className="w-3.5 h-3.5 shrink-0" />
-                  <span>AI Copilot</span>
+                  <Bot className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>AI Copilot</span>}
                 </NavLink>
               </div>
             )}
@@ -133,38 +205,63 @@ const Sidebar = () => {
         {/* GROUP 2: Officer Console */}
         {user && isUserOfficer && (
           <div className="space-y-1">
-            <button 
-              onClick={() => setOpenOfficer(!openOfficer)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-350 transition-colors"
-            >
-              <span>Officer Console</span>
-              {openOfficer ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            </button>
+            {!collapsed ? (
+              <button 
+                onClick={() => setOpenOfficer(!openOfficer)}
+                className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-350 transition-colors"
+              >
+                <span>Officer Console</span>
+                {openOfficer ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+              </button>
+            ) : (
+              <div className="h-[1px] bg-slate-200 dark:bg-slate-850 my-2" />
+            )}
 
-            {openOfficer && (
-              <div className="space-y-1 pl-1">
+            {(openOfficer || collapsed) && (
+              <div className="space-y-1">
                 <NavLink
                   to="/officer-dashboard"
+                  title="Officer Dashboard"
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
-                    }`
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
                   }
                 >
-                  <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
-                  <span>Officer Dashboard</span>
+                  <LayoutDashboard className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Officer Dashboard</span>}
                 </NavLink>
 
                 <NavLink
                   to="/risk-intelligence"
+                  title="Risk Intelligence"
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
-                    }`
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
                   }
                 >
-                  <ShieldIcon className="w-3.5 h-3.5 shrink-0" />
-                  <span>Risk Intelligence</span>
+                  <Shield className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Risk Intelligence</span>}
+                </NavLink>
+
+                <NavLink
+                  to="/copilot"
+                  title="AI Copilot"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
+                  }
+                >
+                  <Bot className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>AI Copilot</span>}
                 </NavLink>
               </div>
             )}
@@ -174,38 +271,108 @@ const Sidebar = () => {
         {/* GROUP 3: Admin Console */}
         {user && isUserAdmin && (
           <div className="space-y-1">
-            <button 
-              onClick={() => setOpenAdmin(!openAdmin)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-350 transition-colors"
-            >
-              <span>Municipal Console</span>
-              {openAdmin ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            </button>
+            {!collapsed ? (
+              <button 
+                onClick={() => setOpenAdmin(!openAdmin)}
+                className="w-full flex items-center justify-between px-2 py-1 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-350 transition-colors"
+              >
+                <span>Municipal Hub</span>
+                {openAdmin ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+              </button>
+            ) : (
+              <div className="h-[1px] bg-slate-200 dark:bg-slate-850 my-2" />
+            )}
 
-            {openAdmin && (
-              <div className="space-y-1 pl-1">
+            {(openAdmin || collapsed) && (
+              <div className="space-y-1">
                 <NavLink
                   to="/admin-dashboard"
+                  title="Admin Dashboard"
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
-                    }`
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
                   }
                 >
-                  <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
-                  <span>Admin Dashboard</span>
+                  <LayoutDashboard className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Admin Dashboard</span>}
+                </NavLink>
+
+                <NavLink
+                  to="/departments"
+                  title="Department Analytics"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
+                  }
+                >
+                  <TrendingUp className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Department Analytics</span>}
                 </NavLink>
 
                 <NavLink
                   to="/risk-intelligence"
+                  title="Risk Intelligence"
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
-                    }`
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
                   }
                 >
-                  <ShieldIcon className="w-3.5 h-3.5 shrink-0" />
-                  <span>Risk Intelligence</span>
+                  <Shield className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Risk Intelligence</span>}
+                </NavLink>
+
+                <NavLink
+                  to="/copilot"
+                  title="AI Copilot"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
+                  }
+                >
+                  <Bot className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>AI Copilot</span>}
+                </NavLink>
+
+                <NavLink
+                  to="/ai-insights"
+                  title="AI Insights"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
+                  }
+                >
+                  <TrendingUp className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>AI Insights</span>}
+                </NavLink>
+
+                <NavLink
+                  to="/moderation"
+                  title="Community Moderation"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
+                  }
+                >
+                  <ShieldAlert className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Community Moderation</span>}
                 </NavLink>
               </div>
             )}
@@ -215,17 +382,20 @@ const Sidebar = () => {
       </nav>
 
       {/* Account Settings */}
-      <div className="p-4 border-t border-slate-850 space-y-2 shrink-0">
+      <div className="p-3 border-t border-slate-200 dark:border-slate-850 space-y-2 shrink-0">
         <NavLink
           to="/settings"
+          title="Settings"
           className={({ isActive }) =>
             `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-              isActive ? 'bg-emerald-500 text-slate-950 shadow-md' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-200'
-            }`
+              isActive 
+                ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+            } ${collapsed ? 'justify-center' : ''}`
           }
         >
           <Settings className="w-4 h-4 shrink-0" />
-          <span>Settings</span>
+          {!collapsed && <span>Settings</span>}
         </NavLink>
       </div>
 

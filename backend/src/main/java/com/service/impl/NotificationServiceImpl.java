@@ -65,4 +65,38 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
     }
+
+    @Override
+    public void markAsRead(String email, String notificationId) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) return;
+
+        Notification notif = notificationRepository.findById(notificationId);
+        if (notif != null && user.getId().equals(notif.getRecipientId())) {
+            notif.setRead(true);
+            notificationRepository.save(notif);
+        }
+    }
+
+    @Override
+    public void deleteNotification(String email, String notificationId) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) return;
+
+        Notification notif = notificationRepository.findById(notificationId);
+        if (notif != null && user.getId().equals(notif.getRecipientId())) {
+            notificationRepository.delete(notificationId);
+        }
+    }
+
+    @Override
+    public void deleteAllNotifications(String email) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) return;
+
+        List<Notification> list = notificationRepository.findByRecipientId(user.getId());
+        for (Notification notification : list) {
+            notificationRepository.delete(notification.getId());
+        }
+    }
 }

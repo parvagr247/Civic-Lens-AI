@@ -41,6 +41,21 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Premium custom slate shades for smooth depth transitions
+        slate: {
+          150: "#e9edf5",
+          250: "#d2dbe5",
+          350: "#abb8c9",
+          450: "#73879c",
+          550: "#53657a",
+          650: "#3d4e63",
+          850: "#141d2f",
+          855: "#0f1624",
+          955: "#090d16",
+        },
+        emerald: {
+          250: "#a3eed1",
+        },
         // Government/Risk indicator colors
         risk: {
           low: "#10b981",      // Emerald

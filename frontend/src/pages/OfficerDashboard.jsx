@@ -139,66 +139,84 @@ export default function OfficerDashboard() {
   };
 
   // Stats derivation
-  const pendingCount = assignments.filter(a => a.status !== 'COMPLETED').length;
-  const completedCount = assignments.filter(a => a.status === 'COMPLETED').length;
+  const now = Date.now();
+  const pendingCount = assignments.filter(a => a.status !== 'COMPLETED' && a.status !== 'CLOSED').length;
+  const completedCount = assignments.filter(a => a.status === 'COMPLETED' || a.status === 'CLOSED').length;
+  
+  // Day 6 Stats
+  const overdueCount = assignments.filter(a => a.status !== 'COMPLETED' && a.status !== 'CLOSED' && a.deadline && now > a.deadline).length;
+  const todaysTasksCount = assignments.filter(a => a.status !== 'COMPLETED' && a.status !== 'CLOSED' && a.deadline && (a.deadline - now) < 86400000 && (a.deadline - now) > 0).length;
+  const upcomingDeadlinesCount = assignments.filter(a => a.status !== 'COMPLETED' && a.status !== 'CLOSED' && a.deadline && (a.deadline - now) > 86400000 && (a.deadline - now) < 259200000).length;
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <Loader2 size={32} className="animate-spin text-emerald-400" />
+        <Loader2 size={32} className="animate-spin text-emerald-500" />
         <span className="text-sm text-slate-400">Loading Officer Console...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 officer-dashboard">
+    <div className="space-y-6 officer-dashboard text-slate-900 dark:text-slate-100">
       
       {/* Officer Header Card */}
-      <Card className="p-6 bg-slate-900/30 border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-emerald-950/40 border border-emerald-900/60 text-emerald-400 rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 rounded-2xl flex items-center justify-center shadow-lg">
             <ShieldCheck size={32} />
           </div>
           <div>
-            <h2 className="text-lg font-black text-white">Officer Operations Console</h2>
-            <p className="text-xs text-slate-450 mt-0.5">Welcome, {currentUser?.name}. Manage your assigned maintenance and logistics dispatch pipeline.</p>
+            <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Officer Operations Console</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-455 mt-0.5">Welcome, {currentUser?.name}. Manage your assigned maintenance and logistics dispatch pipeline.</p>
           </div>
         </div>
       </Card>
 
       {/* Aggregate metrics widgets */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Performance Score */}
-        <Card className="p-4 bg-slate-900/30 border-slate-800 flex items-center gap-4">
-          <div className="p-3 bg-amber-950/40 border border-amber-900/60 text-amber-400 rounded-xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Performance & Ranking */}
+        <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
+          <div className="p-3 bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 rounded-xl">
             <Award size={20} />
           </div>
           <div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">Performance Rating</span>
-            <span className="text-xl font-black text-white">5.0 / 5.0</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block">Department Rank</span>
+            <span className="text-md font-black text-slate-800 dark:text-white">#3 in Public Works</span>
+            <span className="text-[9px] text-amber-650 block font-bold">Rating: 4.9 / 5.0</span>
           </div>
         </Card>
 
-        {/* Pending Assignments */}
-        <Card className="p-4 bg-slate-900/30 border-slate-800 flex items-center gap-4">
-          <div className="p-3 bg-rose-950/40 border border-rose-900/60 text-rose-400 rounded-xl">
+        {/* Today's Tasks */}
+        <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
+          <div className="p-3 bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 rounded-xl">
             <Clock size={20} />
           </div>
           <div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">Pending Dispatch Tasks</span>
-            <span className="text-xl font-black text-white">{pendingCount} Active</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block">Due Today</span>
+            <span className="text-xl font-black text-slate-800 dark:text-white">{todaysTasksCount} Tasks</span>
+          </div>
+        </Card>
+
+        {/* Overdue Alerts */}
+        <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-250 dark:border-slate-800 flex items-center gap-4 shadow-sm">
+          <div className="p-3 bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 rounded-xl">
+            <AlertCircle size={20} />
+          </div>
+          <div>
+            <span className="text-[10px] text-slate-550 uppercase tracking-widest font-bold block">SLA Overdue</span>
+            <span className="text-xl font-black text-rose-600">{overdueCount} Alerts</span>
           </div>
         </Card>
 
         {/* Completed Assignments */}
-        <Card className="p-4 bg-slate-900/30 border-slate-800 flex items-center gap-4">
-          <div className="p-3 bg-emerald-950/40 border border-emerald-900/60 text-emerald-400 rounded-xl">
+        <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
+          <div className="p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 rounded-xl">
             <CheckCircle size={20} />
           </div>
           <div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">Completed Tasks</span>
-            <span className="text-xl font-black text-white">{completedCount} Resolved</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block">Completed today</span>
+            <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{completedCount} Fixed</span>
           </div>
         </Card>
       </div>
@@ -305,42 +323,42 @@ export default function OfficerDashboard() {
           
           {/* Resolution Drawer Form */}
           {resolvingId && (
-            <div className="bg-slate-900/20 border border-slate-850 rounded-xl p-5 shadow-lg space-y-4 animate-in slide-in-from-top-4 duration-300">
-              <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-widest border-b border-slate-800 pb-2">
+            <div className="bg-white dark:bg-slate-900/20 border border-slate-200 dark:border-slate-850 rounded-xl p-5 shadow-sm space-y-4 animate-in slide-in-from-top-4 duration-300">
+              <h3 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">
                 Mark Incident Resolved
               </h3>
               
               <form onSubmit={handleResolveSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Fix Completion Image (URL)</label>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Fix Completion Image (URL)</label>
                   <input
                     type="text"
                     value={completionImage}
                     onChange={(e) => setCompletionImage(e.target.value)}
                     placeholder="https://images.unsplash.com/photo-finished..."
-                    className="w-full bg-slate-950/40 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-450 focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Internal Repair Notes</label>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Internal Repair Notes</label>
                   <textarea
                     value={internalNotes}
                     onChange={(e) => setInternalNotes(e.target.value)}
                     placeholder="Replaced cracked concrete foundation, patched P1..."
                     rows={2}
-                    className="w-full bg-slate-950/40 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-450 focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Completion Summary Report *</label>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Completion Summary Report *</label>
                   <textarea
                     value={completionReport}
                     onChange={(e) => setCompletionReport(e.target.value)}
                     placeholder="Public works department completed repair..."
                     rows={3}
-                    className="w-full bg-slate-950/40 border border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-850 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-450 focus:outline-none focus:border-emerald-500/50"
                     required
                   />
                 </div>
@@ -348,7 +366,7 @@ export default function OfficerDashboard() {
                 <div className="flex gap-2">
                   <Button
                     type="submit"
-                    className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs py-2"
+                    className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs py-2 shadow"
                     disabled={submittingResolution}
                   >
                     {submittingResolution ? 'Submitting Report...' : 'Submit Resolution'}
@@ -357,7 +375,7 @@ export default function OfficerDashboard() {
                     type="button"
                     variant="outline"
                     onClick={() => setResolvingId(null)}
-                    className="border-slate-800 text-xs py-2 px-3 text-slate-400"
+                    className="border-slate-200 dark:border-slate-800 text-xs py-2 px-3 text-slate-500 dark:text-slate-400"
                   >
                     Cancel
                   </Button>
@@ -368,19 +386,19 @@ export default function OfficerDashboard() {
 
           {/* Dispatcher Messaging Drawer */}
           {activeChatId && (
-            <div className="bg-slate-900/20 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4 flex flex-col h-[380px] justify-between">
+            <div className="bg-white dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4 flex flex-col h-[380px] justify-between">
               
-              <div className="space-y-1.5 border-b border-slate-850 pb-2 shrink-0 flex items-center justify-between">
+              <div className="space-y-1.5 border-b border-slate-100 dark:border-slate-850 pb-2 shrink-0 flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-bold text-slate-350 uppercase tracking-widest flex items-center gap-1.5">
-                    <MessageSquare size={13} className="text-emerald-400" />
+                  <h3 className="text-xs font-bold text-slate-650 dark:text-slate-350 uppercase tracking-widest flex items-center gap-1.5">
+                    <MessageSquare size={13} className="text-emerald-500" />
                     Internal Chat logs
                   </h3>
-                  <span className="text-[9px] text-slate-500 block mt-0.5">Task Ref: {activeChatId.substring(0, 8)}</span>
+                  <span className="text-[9px] text-slate-450 dark:text-slate-500 block mt-0.5">Task Ref: {activeChatId.substring(0, 8)}</span>
                 </div>
                 <button 
                   onClick={() => setActiveChatId(null)}
-                  className="text-[9px] font-bold text-slate-500 hover:text-slate-300"
+                  className="text-[9px] font-bold text-slate-450 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-350"
                 >
                   Close
                 </button>
@@ -395,9 +413,9 @@ export default function OfficerDashboard() {
                     const isSelfMsg = msg.senderId === currentUser?.userId;
                     return (
                       <div key={msg.id} className={`flex flex-col max-w-[80%] ${isSelfMsg ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
-                        <span className="text-[8px] font-black text-slate-500 mb-0.5">{msg.senderName}</span>
+                        <span className="text-[8px] font-black text-slate-450 dark:text-slate-500 mb-0.5">{msg.senderName}</span>
                         <div className={`p-2 rounded-xl text-[10px] leading-relaxed ${
-                          isSelfMsg ? 'bg-emerald-500 text-slate-950 font-semibold' : 'bg-slate-950 border border-slate-850 text-slate-300'
+                          isSelfMsg ? 'bg-emerald-500 text-slate-950 font-semibold' : 'bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-850 text-slate-800 dark:text-slate-300'
                         }`}>
                           {msg.text}
                         </div>
@@ -408,13 +426,13 @@ export default function OfficerDashboard() {
               </div>
 
               {/* Chat Input form */}
-              <div className="flex gap-2 pt-2 border-t border-slate-850/50 shrink-0">
+              <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-850/50 shrink-0">
                 <input
                   type="text"
                   value={newMessageText}
                   onChange={(e) => setNewMessageText(e.target.value)}
                   placeholder="Type message to dispatcher..."
-                  className="flex-1 bg-slate-950/40 border border-slate-850 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50"
+                  className="flex-1 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-850 rounded-xl px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 placeholder-slate-450 focus:outline-none focus:border-emerald-500/50"
                   onKeyDown={(e) => e.key === 'Enter' && handleSendChatMessage()}
                 />
                 <Button
@@ -432,6 +450,24 @@ export default function OfficerDashboard() {
 
             </div>
           )}
+
+          {/* GIS Navigation Route Map Placeholder */}
+          <Card className="p-5 bg-white dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-455 uppercase tracking-widest border-b border-slate-100 dark:border-slate-850 pb-2 flex items-center gap-1.5">
+              <Clock size={13} className="text-emerald-500" />
+              GIS Worksite Navigation
+            </h3>
+            <div className="h-40 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-150 dark:border-slate-850 p-4 flex flex-col items-center justify-center text-center relative overflow-hidden">
+              <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#10b981_1.5px,transparent_1.5px)] [background-size:16px_16px]" />
+              <div className="text-[10px] text-slate-500 font-bold">Recommended Service Route:</div>
+              <div className="text-[11px] font-black text-slate-800 dark:text-white mt-1.5 flex flex-wrap items-center gap-1.5 justify-center">
+                <span>Start: Municipal Yard Depot</span>
+                <ChevronRight size={12} className="text-emerald-500" />
+                <span>Destination: Assigned Worksite Address</span>
+              </div>
+              <span className="text-[9px] text-slate-400 font-mono mt-3">Estimated Travel Time: 18 mins (2.4 miles)</span>
+            </div>
+          </Card>
 
         </div>
 

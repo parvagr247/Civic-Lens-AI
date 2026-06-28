@@ -30,6 +30,7 @@ public class CitizenDashboardResponse {
     private List<IncidentResponse> recentReports;
     private List<IncidentResponse> nearbyIssues;
     private List<LeaderboardEntry> leaderboardPreview;
+    private List<LeaderboardEntry> administrativeTeam;
     private List<Achievement> achievementsPreview;
     private List<ActivityLog> activityTimeline;
     private Map<String, Integer> weeklyActivity; // Map of dayOfWeek -> count

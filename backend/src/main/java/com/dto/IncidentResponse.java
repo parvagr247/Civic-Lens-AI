@@ -23,7 +23,12 @@ public class IncidentResponse {
     private String severity;
     private GeoLocation location;
     private String imageUrl;
+    private String imagePath;
     private Boolean anonymous;
+    private Integer reopenCount;
+    private String citizenFeedback;
+    private String citizenReopenPhotoUrl;
+    private Long closedAt;
     private Long createdAt;
     private Long updatedAt;
 
@@ -43,7 +48,12 @@ public class IncidentResponse {
                 .severity(incident.getSeverity() != null ? incident.getSeverity().name() : null)
                 .location(incident.getLocation())
                 .imageUrl(incident.getImageUrl())
+                .imagePath(incident.getImagePath())
                 .anonymous(incident.getAnonymous())
+                .reopenCount(incident.getReopenCount())
+                .citizenFeedback(incident.getCitizenFeedback())
+                .citizenReopenPhotoUrl(incident.getCitizenReopenPhotoUrl())
+                .closedAt(incident.getClosedAt())
                 .createdAt(incident.getCreatedAt())
                 .updatedAt(incident.getUpdatedAt())
                 .build();

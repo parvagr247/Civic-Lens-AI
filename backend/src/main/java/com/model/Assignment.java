@@ -26,5 +26,7 @@ public class Assignment {
     private String internalNotes;
     private String completionImageUrl;
     private String completionReport;
+    private Long completedAt;
+    private Boolean escalated;
     private Long updatedAt;
 }

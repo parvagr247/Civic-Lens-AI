@@ -42,3 +42,56 @@ export const getAllIncidents = () => {
 export const getIncidentById = (id) => {
   return api.get(`/api/issues/${id}`);
 };
+
+/**
+ * Request OTP code for anonymous report filing.
+ * @param {string} emailOrPhone Email address or phone contact.
+ * @returns {Promise<Object>} Session credentials (trackingId, otpCode).
+ */
+export const requestOtp = (emailOrPhone) => {
+  return api.post('/api/issues/anonymous/request-otp', { emailOrPhone });
+};
+
+/**
+ * Verify OTP code.
+ * @param {string} emailOrPhone Contact detail.
+ * @param {string} otpCode Verification code.
+ * @returns {Promise<Object>} Verification status.
+ */
+export const verifyOtp = (emailOrPhone, otpCode) => {
+  return api.post('/api/issues/anonymous/verify-otp', { emailOrPhone, otpCode });
+};
+
+/**
+ * Submit anonymous incident report.
+ * @param {FormData} formData Report specifications.
+ * @param {string} trackingId Verified tracking ID.
+ * @returns {Promise<Object>} Filed report results.
+ */
+export const submitAnonymous = (formData, trackingId) => {
+  return api.post(`/api/issues/anonymous/submit?trackingId=${trackingId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+/**
+ * Track an incident report's status via tracking ID.
+ * @param {string} trackingId Anonymous tracking ID.
+ * @returns {Promise<Object>} Report details.
+ */
+export const trackIncident = (trackingId) => {
+  return api.get(`/api/issues/track/${trackingId}`);
+};
+
+/**
+ * Allows admins to override incident parameter overrides.
+ * @param {string} id Incident UUID.
+ * @param {Object} payload Overridden priority/category/status/officer specifications.
+ * @returns {Promise<Object>} Edited report results.
+ */
+export const overrideIncident = (id, payload) => {
+  return api.put(`/api/issues/${id}/override`, payload);
+};
+

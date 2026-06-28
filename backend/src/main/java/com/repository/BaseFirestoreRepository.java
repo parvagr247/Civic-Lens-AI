@@ -67,4 +67,15 @@ public abstract class BaseFirestoreRepository<T> {
             throw new FirebaseException("Failed to list database records from " + collectionName, e);
         }
     }
+
+    public void delete(String id) {
+        log.info("Firestore: Deleting document {} from collection '{}'", id, collectionName);
+        try {
+            firestore.collection(collectionName).document(id).delete().get();
+        } catch (Exception e) {
+            log.error("Firestore Error: Failed to delete document {} from {}", id, collectionName, e);
+            throw new FirebaseException("Failed to delete record from " + collectionName, e);
+        }
+    }
 }
+

@@ -48,7 +48,6 @@ public class ActivityLogFirestoreRepository {
         try {
             QuerySnapshot snapshot = firestore.collection(COLLECTION_NAME)
                     .whereEqualTo("userId", userId)
-                    .orderBy("timestamp", Query.Direction.DESCENDING)
                     .get()
                     .get();
 
@@ -56,6 +55,8 @@ public class ActivityLogFirestoreRepository {
             for (QueryDocumentSnapshot document : snapshot.getDocuments()) {
                 logs.add(document.toObject(ActivityLog.class));
             }
+            // Sort programmatically descending by timestamp
+            logs.sort((l1, l2) -> Long.compare(l2.getTimestamp(), l1.getTimestamp()));
             return logs;
         } catch (Exception e) {
             log.error("Firestore Error: Failed to fetch activity logs for user: {}", userId, e);

@@ -86,4 +86,27 @@ public class IncidentRepository {
             throw new FirebaseException("Failed to list incidents from Firestore", e);
         }
     }
+
+    /**
+     * Lists incidents submitted by a specific user (queried by their email).
+     */
+    public List<Incident> findByReportedBy(String reportedBy) {
+        log.info("Listing incidents reported by email: {}", reportedBy);
+        try {
+            QuerySnapshot snapshot = firestore.collection(COLLECTION_NAME)
+                    .whereEqualTo("reportedBy", reportedBy)
+                    .get()
+                    .get();
+
+            List<Incident> incidents = new ArrayList<>();
+            for (QueryDocumentSnapshot document : snapshot.getDocuments()) {
+                incidents.add(document.toObject(Incident.class));
+            }
+            incidents.sort((i1, i2) -> Long.compare(i2.getCreatedAt(), i1.getCreatedAt()));
+            return incidents;
+        } catch (Exception e) {
+            log.error("Failed to query incidents reported by {} from Firestore", reportedBy, e);
+            throw new FirebaseException("Failed to read user reported incidents from database", e);
+        }
+    }
 }

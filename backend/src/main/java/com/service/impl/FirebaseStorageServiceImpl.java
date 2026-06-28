@@ -1,8 +1,9 @@
-package com.service;
+package com.service.impl;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.exception.ValidationException;
+import com.service.StorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,30 +18,22 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Service managing image uploads to Google Firebase Cloud Storage.
- * Handles file validations (size, extension) and dynamic path formatting.
+ * Service implementation managing image uploads to Google Firebase Cloud Storage.
  */
 @Slf4j
 @Service
-public class FirebaseStorageService {
+public class FirebaseStorageServiceImpl implements StorageService {
 
     private final Bucket storageBucket;
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "webp");
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
-    public FirebaseStorageService(@Autowired(required = false) Bucket storageBucket) {
+    public FirebaseStorageServiceImpl(@Autowired(required = false) Bucket storageBucket) {
         this.storageBucket = storageBucket;
     }
 
-    /**
-     * Uploads the multipart image file to Firebase Storage.
-     * Path pattern: uploads/{year}/{month}/{incident-id}/{filename}
-     *
-     * @param file       Multipart image file.
-     * @param incidentId The generated incident identifier.
-     * @return Public download URL or mock fallback URL.
-     */
-    public String uploadIncidentImage(MultipartFile file, String incidentId) {
+    @Override
+    public ImageUploadResult uploadIncidentImage(MultipartFile file, String incidentId) {
         log.info("Initiating upload logic for incident: {}", incidentId);
 
         if (file == null || file.isEmpty()) {
@@ -64,7 +57,10 @@ public class FirebaseStorageService {
         // Resilient fallback for unconfigured firebase environments
         if (storageBucket == null) {
             log.warn("Firebase Storage Bucket is unconfigured. Returning a high-quality mock image URL for demonstration.");
-            return "https://images.unsplash.com/photo-1515162305285-0293e4767cc2?q=80&w=600&auto=format&fit=crop";
+            return ImageUploadResult.builder()
+                    .storagePath("uploads/mock/" + incidentId + "/" + originalFilename)
+                    .downloadUrl("https://images.unsplash.com/photo-1515162305285-0293e4767cc2?q=80&w=600&auto=format&fit=crop")
+                    .build();
         }
 
         LocalDate now = LocalDate.now();
@@ -84,7 +80,10 @@ public class FirebaseStorageService {
                     URLEncoder.encode(blobPath, StandardCharsets.UTF_8.name()));
             
             log.info("File uploaded successfully. URL: {}", publicUrl);
-            return publicUrl;
+            return ImageUploadResult.builder()
+                    .storagePath(blobPath)
+                    .downloadUrl(publicUrl)
+                    .build();
         } catch (IOException e) {
             log.error("Failed to read image bytes during upload", e);
             throw new ValidationException("Unable to process uploaded file bytes: " + e.getMessage());
