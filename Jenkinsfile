@@ -67,26 +67,28 @@ pipeline {
         stage('Health Check') {
             steps {
                 script {
-                    echo 'Polling backend health endpoint...'
+                    echo 'Polling backend health endpoint inside civiclens-backend container...'
                     int maxRetries = 12
                     int retries = 0
                     boolean healthy = false
                     while (retries < maxRetries && !healthy) {
                         sleep time: 10, unit: 'SECONDS'
                         try {
-                            def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' ${BACKEND_HEALTH_URL}", returnStdout: true).trim()
-                            if (response == "200") {
+                            def response = sh(script: "docker exec civiclens-backend wget -qO- http://localhost:9526/actuator/health", returnStdout: true).trim()
+                            if (response.contains('"status":"UP"') || response.contains('"status" : "UP"')) {
                                 healthy = true
-                                echo 'Deployment healthy!'
+                                echo 'Deployment healthy! Actuator reported status UP.'
                             } else {
-                                echo "Backend response code: ${response}. Retrying..."
+                                echo "Backend response: ${response}. Retrying..."
                             }
                         } catch (Exception e) {
-                            echo "Health check connection failed: ${e.message}. Retrying..."
+                            echo "Health check inside container failed: ${e.message}. Retrying..."
                         }
                         retries++
                     }
                     if (!healthy) {
+                        echo '=== HEALTH CHECK FAILED: Printing container logs ==='
+                        sh 'docker logs civiclens-backend --tail=200'
                         error 'Backend failed to pass actuator health check. Aborting deployment!'
                     }
                 }
