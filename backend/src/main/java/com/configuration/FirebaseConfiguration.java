@@ -43,18 +43,29 @@ public class FirebaseConfiguration {
     @Bean
     public FirebaseApp firebaseApp() {
         try {
-            log.info("Initializing Google Firebase App using config path: {}", firebaseConfigPath);
-            Resource resource = resourceLoader.getResource(firebaseConfigPath);
+            String resolvedPath = firebaseConfigPath;
+            if (resolvedPath == null || resolvedPath.trim().isEmpty()) {
+                resolvedPath = "classpath:firebase-service-account.json";
+            }
+            log.info("Initializing Google Firebase App using config path: {}", resolvedPath);
+            Resource resource = resourceLoader.getResource(resolvedPath);
             
             if (!resource.exists()) {
-                throw new FirebaseException("Firebase service account credentials file not found at " + firebaseConfigPath);
+                throw new FirebaseException("Firebase service account credentials file not found at " + resolvedPath);
             }
 
             try (InputStream serviceAccount = resource.getInputStream()) {
-                FirebaseOptions options = FirebaseOptions.builder()
-                        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                        .setStorageBucket(storageBucket)
-                        .build();
+                FirebaseOptions.Builder optionsBuilder = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.fromStream(serviceAccount));
+
+                if (storageBucket != null && !storageBucket.trim().isEmpty()) {
+                    optionsBuilder.setStorageBucket(storageBucket.trim());
+                    log.info("Firebase Storage configured.");
+                } else {
+                    log.info("Firebase Storage disabled.\nStorage-dependent features unavailable.");
+                }
+
+                FirebaseOptions options = optionsBuilder.build();
 
                 if (FirebaseApp.getApps().isEmpty()) {
                     FirebaseApp app = FirebaseApp.initializeApp(options);
@@ -85,6 +96,10 @@ public class FirebaseConfiguration {
      */
     @Bean
     public Bucket storageBucket(FirebaseApp firebaseApp) {
+        if (storageBucket == null || storageBucket.trim().isEmpty()) {
+            log.info("Google Firebase Storage bucket is not configured. Returning null Bucket bean.");
+            return null;
+        }
         log.info("Registering Google Firebase Storage bucket bean: {}", storageBucket);
         try {
             return StorageClient.getInstance(firebaseApp).bucket();

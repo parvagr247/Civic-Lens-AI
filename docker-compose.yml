@@ -8,14 +8,14 @@ services:
     container_name: civiclens-backend
     restart: unless-stopped
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - PORT=9526
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GEMINI_MODEL=${GEMINI_MODEL}
-      - FIREBASE_CONFIG_PATH=file:/opt/civiclens/firebase/firebase-service-account.json
-      - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
-      - FIREBASE_DATABASE_URL=${FIREBASE_DATABASE_URL}
-      - APP_ALLOWED_ORIGINS=${APP_ALLOWED_ORIGINS}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - PORT=${PORT:-9526}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-mock-gemini-key}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - FIREBASE_CONFIG_PATH=${FIREBASE_CONFIG_PATH:-file:/opt/civiclens/firebase/firebase-service-account.json}
+      - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET:-}
+      - FIREBASE_DATABASE_URL=${FIREBASE_DATABASE_URL:-}
+      - APP_ALLOWED_ORIGINS=${APP_ALLOWED_ORIGINS:-http://localhost,http://localhost:80}
     volumes:
       - civiclens-logs:/opt/civiclens/logs
       - /opt/civiclens/firebase:/opt/civiclens/firebase:ro
