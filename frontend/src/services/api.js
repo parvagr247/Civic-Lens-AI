@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { v4 as uuid } from 'uuid';
 
 // Resolve backend target URL from environment variables, defaulting to local Spring Boot port
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9526';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:9526' : '/api');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -15,7 +16,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Generate a correlation ID for request tracing
-    config.headers['X-Correlation-ID'] = crypto.randomUUID();
+    config.headers['X-Correlation-ID'] = uuid();
 
     // JWT token lookup placeholder
     const token = localStorage.getItem('token');
@@ -49,6 +50,15 @@ api.interceptors.response.use(
       errorDetails.message = apiResponse?.message || 'Server error occurred.';
       errorDetails.errors = apiResponse?.errors || [];
       console.error(`[API Error] Response received: ${errorDetails.status} - ${errorDetails.message}`, errorDetails.errors);
+      
+      // Auto logout on unauthorized
+      if (errorDetails.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        if (!window.location.pathname.includes('/auth') && window.location.pathname !== '/' && window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
     } else if (error.request) {
       // Request was sent but no response came back
       errorDetails.message = 'No response received from server. Verify backend is running.';
@@ -58,6 +68,9 @@ api.interceptors.response.use(
       errorDetails.message = error.message;
       console.error('[API Error] Request config failed:', error.message);
     }
+
+    // Dispatch global event for ToastProvider
+    window.dispatchEvent(new CustomEvent('api-error', { detail: errorDetails }));
 
     return Promise.reject(errorDetails);
   }

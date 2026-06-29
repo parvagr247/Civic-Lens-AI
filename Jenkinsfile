@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        DOCKER_BUILDKIT = '1'
         DOCKER_IMAGE_BACKEND = 'civiclens-backend'
         DOCKER_IMAGE_FRONTEND = 'civiclens-frontend'
         BACKEND_HEALTH_URL = 'http://localhost:9526/actuator/health'
@@ -108,11 +109,18 @@ pipeline {
             script {
                 echo '=== DEPLOYMENT FAILED: Rolling back to previous stable containers ==='
                 try {
-                    sh 'docker tag ${DOCKER_IMAGE_BACKEND}:rollback ${DOCKER_IMAGE_BACKEND}:stable'
-                    sh 'docker tag ${DOCKER_IMAGE_FRONTEND}:rollback ${DOCKER_IMAGE_FRONTEND}:stable'
-                    sh 'docker compose down || true'
-                    sh 'docker compose up -d'
-                    echo 'Rollback completed successfully.'
+                    def hasBackendRollback = sh(script: "docker image inspect ${DOCKER_IMAGE_BACKEND}:rollback >/dev/null 2>&1 && echo 'yes' || echo 'no'", returnStdout: true).trim()
+                    def hasFrontendRollback = sh(script: "docker image inspect ${DOCKER_IMAGE_FRONTEND}:rollback >/dev/null 2>&1 && echo 'yes' || echo 'no'", returnStdout: true).trim()
+                    
+                    if (hasBackendRollback == 'yes' && hasFrontendRollback == 'yes') {
+                        sh 'docker tag ${DOCKER_IMAGE_BACKEND}:rollback ${DOCKER_IMAGE_BACKEND}:stable'
+                        sh 'docker tag ${DOCKER_IMAGE_FRONTEND}:rollback ${DOCKER_IMAGE_FRONTEND}:stable'
+                        sh 'docker compose down || true'
+                        sh 'docker compose up -d'
+                        echo 'Rollback completed successfully.'
+                    } else {
+                        echo 'Rollback skipped: Rollback backup images do not exist (e.g. this is the first deployment).'
+                    }
                 } catch (Exception e) {
                     echo "Rollback aborted or failed: ${e.message}"
                 }

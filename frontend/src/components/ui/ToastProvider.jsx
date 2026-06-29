@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { X, CheckCircle, AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { v4 as uuid } from 'uuid';
 
 const ToastContext = createContext(null);
 
@@ -15,13 +16,22 @@ export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
   const addToast = useCallback((message, type = 'info', duration = 4000) => {
-    const id = crypto.randomUUID();
+    const id = uuid();
     setToasts((prev) => [...prev, { id, message, type }]);
 
     setTimeout(() => {
       removeToast(id);
     }, duration);
   }, []);
+
+  useEffect(() => {
+    const handleApiError = (event) => {
+      const { message, status } = event.detail;
+      addToast(`${message} (Status: ${status})`, 'error', 6000);
+    };
+    window.addEventListener('api-error', handleApiError);
+    return () => window.removeEventListener('api-error', handleApiError);
+  }, [addToast]);
 
   const removeToast = useCallback((id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));

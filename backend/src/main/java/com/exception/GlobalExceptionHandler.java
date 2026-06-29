@@ -32,16 +32,38 @@ public class GlobalExceptionHandler {
         List<String> errors;
         if (ex instanceof MethodArgumentNotValidException) {
             errors = ((MethodArgumentNotValidException) ex).getBindingResult().getFieldErrors().stream()
-                    .map(FieldError::getDefaultMessage)
+                    .map(error -> error.getField() + ": " + error.getDefaultMessage())
                     .collect(Collectors.toList());
         } else {
             errors = ((org.springframework.validation.BindException) ex).getBindingResult().getFieldErrors().stream()
-                    .map(FieldError::getDefaultMessage)
+                    .map(error -> error.getField() + ": " + error.getDefaultMessage())
                     .collect(Collectors.toList());
         }
 
         ApiResponse<Void> response = ApiResponse.error(ResponseMessages.INVALID_INPUT, HttpStatus.BAD_REQUEST.value(), errors);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(jakarta.validation.ConstraintViolationException ex) {
+        log.warn("Constraint validation failed");
+        List<String> errors = ex.getConstraintViolations().stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .collect(Collectors.toList());
+        ApiResponse<Void> response = ApiResponse.error("Constraint validation failed", HttpStatus.BAD_REQUEST.value(), errors);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingParams(org.springframework.web.bind.MissingServletRequestParameterException ex) {
+        ApiResponse<Void> response = ApiResponse.error("Missing required query parameter: " + ex.getParameterName(), HttpStatus.BAD_REQUEST.value(), null);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        ApiResponse<Void> response = ApiResponse.error("HTTP method not supported: " + ex.getMethod(), HttpStatus.METHOD_NOT_ALLOWED.value(), null);
+        return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
