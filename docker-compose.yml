@@ -18,7 +18,7 @@ services:
       - APP_ALLOWED_ORIGINS=${APP_ALLOWED_ORIGINS}
     volumes:
       - civiclens-logs:/opt/civiclens/logs
-      - ./firebase:/opt/civiclens/firebase:ro
+      - /opt/civiclens/firebase:/opt/civiclens/firebase:ro
     networks:
       - civiclens-network
     logging:
