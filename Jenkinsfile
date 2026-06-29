@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_BUILDKIT = '1'
         DOCKER_IMAGE_BACKEND = 'civiclens-backend'
         DOCKER_IMAGE_FRONTEND = 'civiclens-frontend'
         BACKEND_HEALTH_URL = 'http://localhost:9526/actuator/health'
@@ -45,7 +44,15 @@ pipeline {
         stage('Backend Docker Build') {
             steps {
                 dir('backend') {
-                    sh 'docker build -t ${DOCKER_IMAGE_BACKEND}:stable .'
+                    sh '''
+                        echo "Building Backend using BuildKit..."
+                        if DOCKER_BUILDKIT=1 docker build -t ${DOCKER_IMAGE_BACKEND}:stable .; then
+                            echo "Backend build completed successfully with BuildKit."
+                        else
+                            echo "BuildKit build failed (likely missing buildx component). Retrying with legacy docker build..."
+                            DOCKER_BUILDKIT=0 docker build -t ${DOCKER_IMAGE_BACKEND}:stable .
+                        fi
+                    '''
                 }
             }
         }
@@ -53,7 +60,15 @@ pipeline {
         stage('Frontend Docker Build') {
             steps {
                 dir('frontend') {
-                    sh 'docker build -t ${DOCKER_IMAGE_FRONTEND}:stable .'
+                    sh '''
+                        echo "Building Frontend using BuildKit..."
+                        if DOCKER_BUILDKIT=1 docker build -t ${DOCKER_IMAGE_FRONTEND}:stable .; then
+                            echo "Frontend build completed successfully with BuildKit."
+                        else
+                            echo "BuildKit build failed (likely missing buildx component). Retrying with legacy docker build..."
+                            DOCKER_BUILDKIT=0 docker build -t ${DOCKER_IMAGE_FRONTEND}:stable .
+                        fi
+                    '''
                 }
             }
         }
