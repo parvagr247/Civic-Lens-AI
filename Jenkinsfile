@@ -45,11 +45,11 @@ pipeline {
             steps {
                 dir('backend') {
                     sh '''
-                        echo "Building Backend using BuildKit..."
-                        if DOCKER_BUILDKIT=1 docker build -t ${DOCKER_IMAGE_BACKEND}:stable .; then
-                            echo "Backend build completed successfully with BuildKit."
+                        if docker buildx version >/dev/null 2>&1; then
+                            echo "Docker Buildx is available. Building Backend with BuildKit..."
+                            DOCKER_BUILDKIT=1 docker build -t ${DOCKER_IMAGE_BACKEND}:stable .
                         else
-                            echo "BuildKit build failed (likely missing buildx component). Retrying with legacy docker build..."
+                            echo "Docker Buildx is NOT available. Building Backend with legacy builder..."
                             DOCKER_BUILDKIT=0 docker build -t ${DOCKER_IMAGE_BACKEND}:stable .
                         fi
                     '''
@@ -61,11 +61,11 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh '''
-                        echo "Building Frontend using BuildKit..."
-                        if DOCKER_BUILDKIT=1 docker build -t ${DOCKER_IMAGE_FRONTEND}:stable .; then
-                            echo "Frontend build completed successfully with BuildKit."
+                        if docker buildx version >/dev/null 2>&1; then
+                            echo "Docker Buildx is available. Building Frontend with BuildKit..."
+                            DOCKER_BUILDKIT=1 docker build -t ${DOCKER_IMAGE_FRONTEND}:stable .
                         else
-                            echo "BuildKit build failed (likely missing buildx component). Retrying with legacy docker build..."
+                            echo "Docker Buildx is NOT available. Building Frontend with legacy builder..."
                             DOCKER_BUILDKIT=0 docker build -t ${DOCKER_IMAGE_FRONTEND}:stable .
                         fi
                     '''
