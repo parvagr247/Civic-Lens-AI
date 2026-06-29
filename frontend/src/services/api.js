@@ -2,7 +2,14 @@ import axios from 'axios';
 import { generateUUID } from '../utils/uuid';
 
 // Resolve backend target URL from environment variables, defaulting to local Spring Boot port
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:9526' : '/api');
+let API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:9526' : '/');
+
+// Strip trailing /api context path if present to prevent duplication since all requests manually prefix it
+if (API_BASE_URL.endsWith('/api')) {
+  API_BASE_URL = API_BASE_URL.slice(0, -4);
+} else if (API_BASE_URL.endsWith('/api/')) {
+  API_BASE_URL = API_BASE_URL.slice(0, -5);
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
