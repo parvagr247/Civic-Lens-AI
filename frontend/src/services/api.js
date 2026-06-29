@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { v4 as uuid } from 'uuid';
+import { generateUUID } from '../utils/uuid';
 
 // Resolve backend target URL from environment variables, defaulting to local Spring Boot port
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:9526' : '/api');
@@ -16,7 +16,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Generate a correlation ID for request tracing
-    config.headers['X-Correlation-ID'] = uuid();
+    config.headers['X-Correlation-ID'] = generateUUID();
 
     // JWT token lookup placeholder
     const token = localStorage.getItem('token');

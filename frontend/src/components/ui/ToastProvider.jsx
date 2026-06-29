@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { X, CheckCircle, AlertTriangle, AlertCircle, Info } from 'lucide-react';
-import { v4 as uuid } from 'uuid';
+import { generateUUID } from '../../utils/uuid';
 
 const ToastContext = createContext(null);
 
@@ -16,7 +16,7 @@ export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
   const addToast = useCallback((message, type = 'info', duration = 4000) => {
-    const id = uuid();
+    const id = generateUUID();
     setToasts((prev) => [...prev, { id, message, type }]);
 
     setTimeout(() => {
