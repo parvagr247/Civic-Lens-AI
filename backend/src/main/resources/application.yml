@@ -29,6 +29,7 @@ spring:
 app:
   version: 1.0.0
   environment: ${SPRING_PROFILES_ACTIVE:dev}
+  allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:3026,http://127.0.0.1:3026}
   # Firebase Configuration Details
   firebase:
     config-path: ${FIREBASE_CONFIG_PATH:classpath:firebase-service-account.json}
@@ -66,3 +67,38 @@ logging:
     org.springframework.web: INFO
     org.springframework.security: INFO
     org.springframework.ai: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+# Production Logging Configuration with Rolling Policy
+logging:
+  file:
+    path: /opt/civiclens/logs
+    name: /opt/civiclens/logs/civiclens.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 7
+  level:
+    root: INFO
+    com: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.springframework.ai: INFO

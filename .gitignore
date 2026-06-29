@@ -1,0 +1,22 @@
+# Build and packaging directories
+**/target/
+**/dist/
+**/node_modules/
+**/logs/
+**/*.log
+
+# Project secrets and environments
+.env
+.env.*
+.env.production.local
+.env.local
+firebase-service-account.json
+**/firebase-service-account.json
+
+# IDE configurations
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+.vscode/
+.DS_Store

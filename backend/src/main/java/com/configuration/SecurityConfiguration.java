@@ -57,6 +57,7 @@ public class SecurityConfiguration {
                 // Allow public access to health, swagger docs, auth, anonymous tracking, and dev seeds
                 .requestMatchers(
                     "/api/health",
+                    "/actuator/**",
                     "/api/version",
                     "/api/status",
                     "/v3/api-docs/**",
