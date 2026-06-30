@@ -97,7 +97,7 @@ export default function RiskCard({ risk, onReanalyzeUpdate }) {
             </div>
             <div className="space-y-1">
               <span className="block text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">SLA Priority</span>
-              <span className="inline-flex px-3 py-1 bg-gray-150 dark:bg-slate-900 border border-border rounded-full text-xs font-black text-foreground">
+              <span className="inline-flex px-3 py-1 bg-slate-100 dark:bg-slate-800 border border-border rounded-full text-xs font-black text-foreground">
                 {risk.priority || 'P3'}
               </span>
             </div>
@@ -121,7 +121,7 @@ export default function RiskCard({ risk, onReanalyzeUpdate }) {
 
             {/* Resolution Deadline */}
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-gray-50/50 dark:bg-slate-955/20 rounded-lg text-muted-foreground">
+              <div className="p-2 bg-gray-50/50 dark:bg-slate-900/20 rounded-lg text-muted-foreground">
                 <Clock size={16} />
               </div>
               <div>
@@ -131,6 +131,7 @@ export default function RiskCard({ risk, onReanalyzeUpdate }) {
                 </span>
               </div>
             </div>
+
 
           </div>
 

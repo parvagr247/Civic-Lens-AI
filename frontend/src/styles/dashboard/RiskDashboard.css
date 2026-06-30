@@ -22,16 +22,21 @@
 }
 
 .risk-chip {
-  background-color: rgba(0, 0, 0, 0.03);
-  border: 1px solid var(--border);
-  color: var(--foreground);
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 9.5px;
 }
 
 .dark .risk-chip {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  color: #cbd5e1;
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
 }
+
 
 /* Timeline Components */
 .timeline-stepper {
@@ -52,9 +57,9 @@
 
 /* Impact Indicators */
 .impact-safety-card {
-  color: #e11d48;
-  border-color: rgba(225, 29, 72, 0.15);
-  background-color: rgba(225, 29, 72, 0.03);
+  color: #9f1239;
+  border-color: #fecdd3;
+  background-color: #fff1f2;
 }
 
 .dark .impact-safety-card {
@@ -64,9 +69,9 @@
 }
 
 .impact-infra-card {
-  color: #d97706;
-  border-color: rgba(217, 119, 6, 0.15);
-  background-color: rgba(217, 119, 6, 0.03);
+  color: #b45309;
+  border-color: #fde68a;
+  background-color: #fef3c7;
 }
 
 .dark .impact-infra-card {
@@ -76,9 +81,9 @@
 }
 
 .impact-env-card {
-  color: #059669;
-  border-color: rgba(5, 150, 105, 0.15);
-  background-color: rgba(5, 150, 105, 0.03);
+  color: #047857;
+  border-color: #a7f3d0;
+  background-color: #ecfdf5;
 }
 
 .dark .impact-env-card {
@@ -88,9 +93,9 @@
 }
 
 .impact-access-card {
-  color: #2563eb;
-  border-color: rgba(37, 99, 235, 0.15);
-  background-color: rgba(37, 99, 235, 0.03);
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  background-color: #eff6ff;
 }
 
 .dark .impact-access-card {
@@ -100,7 +105,14 @@
 }
 
 .escalation-hazard-card {
-  color: #e11d48;
+  color: #be123c;
+  border-color: #fecdd3;
+  background-color: #fff1f2;
+}
+
+.dark .escalation-hazard-card {
+  color: #fda4af;
   border-color: rgba(225, 29, 72, 0.2);
   background-color: rgba(225, 29, 72, 0.05);
 }
+
