@@ -1,34 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import { getDepartmentAnalytics, triggerSlaCheck } from '../services/operationsService';
+import { getAdminDashboard } from '../services/dashboardService';
+import { getAllOfficers } from '../services/officerService';
 import { Card } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { SkeletonLoader } from '../components/ui/SkeletonLoader';
-import { ErrorState } from '../components/ui/ErrorState';
 import { 
-  Building2, Clock, CheckCircle2, AlertTriangle, ShieldAlert,
-  Users, RefreshCw, BarChart2, Award, Star, Activity 
+  Building2, Users, RefreshCw, BarChart2, Star, 
+  ChevronRight, ArrowUpRight, ShieldAlert, Award, ShieldCheck 
 } from 'lucide-react';
 import { useToast } from '../components/ui/ToastProvider';
 
 export default function DepartmentDashboard() {
   const { toast } = useToast();
   const [data, setData] = useState(null);
+  const [officers, setOfficers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [checkingSla, setCheckingSla] = useState(false);
+  const [selectedDept, setSelectedDept] = useState('Public Works');
 
   const fetchAnalytics = async () => {
     setLoading(true);
-    setError(null);
     try {
-      const res = await getDepartmentAnalytics();
-      if (res.success) {
-        setData(res.data);
+      const dashboardRes = await getAdminDashboard();
+      const officersRes = await getAllOfficers();
+      
+      if (dashboardRes.success) {
+        setData(dashboardRes.data);
+      }
+      if (officersRes.success) {
+        setOfficers(officersRes.data || []);
       }
     } catch (err) {
       console.error(err);
-      setError('Failed to fetch municipal department analytics.');
+      toast('Failed to fetch department metrics.', 'error');
     } finally {
       setLoading(false);
     }
@@ -38,261 +41,177 @@ export default function DepartmentDashboard() {
     fetchAnalytics();
   }, []);
 
-  const handleSlaCheck = async () => {
-    setCheckingSla(true);
-    try {
-      const res = await triggerSlaCheck();
-      if (res.success) {
-        toast('SLA Check processed. Overdue dispatches escalated.', 'success');
-        fetchAnalytics();
-      }
-    } catch (err) {
-      toast('Failed to execute SLA Escalation checks.', 'error');
-    } finally {
-      setCheckingSla(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto space-y-6 py-6">
         <SkeletonLoader variant="text" count={1} className="w-1/3" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <SkeletonLoader variant="card" count={4} />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8">
-            <SkeletonLoader variant="card" count={2} />
-          </div>
-          <div className="lg:col-span-4">
-            <SkeletonLoader variant="card" count={2} />
-          </div>
-        </div>
+        <SkeletonLoader variant="card" count={3} />
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="max-w-xl mx-auto py-12">
-        <ErrorState title="Operational Analytics Unavailable" message={error} onRetry={fetchAnalytics} />
-      </div>
-    );
-  }
+  // Workload distributions from Admin Dashboard
+  const workloads = data?.departmentWorkload || {};
 
-  // Workload entries
-  const workloads = data?.workloads || {};
-  const resolutionHours = data?.resolutionHours || {};
-  const officerPerformance = data?.officerPerformance || [];
+  // Standard Departments metadata
+  const baseDepts = [
+    { name: "Public Works", staff: 15, avgSla: "2.1 Days", perf: 4.8 },
+    { name: "Sanitation", staff: 12, avgSla: "1.8 Days", perf: 4.6 },
+    { name: "Water Division", staff: 10, avgSla: "2.5 Days", perf: 4.5 },
+    { name: "Electrical Grid", staff: 8, avgSla: "1.2 Days", perf: 4.9 },
+    { name: "Parks & Recreation", staff: 6, avgSla: "3.2 Days", perf: 4.2 },
+    { name: "Traffic Control", staff: 9, avgSla: "1.5 Days", perf: 4.7 },
+    { name: "Housing Authority", staff: 7, avgSla: "4.0 Days", perf: 4.1 },
+    { name: "Environmental Health", staff: 5, avgSla: "2.8 Days", perf: 4.4 }
+  ];
+
+  // Map dynamic open counts and workload %
+  const departmentsList = baseDepts.map(dept => {
+    const openCases = workloads[dept.name] || 0;
+    const maxCapacity = dept.staff * 3; // Baseline max capacity
+    const currentLoad = Math.min(100, Math.round((openCases / maxCapacity) * 100));
+    return {
+      ...dept,
+      openCases,
+      currentLoad
+    };
+  });
+
+  // Filter officers for currently selected department details
+  const deptOfficers = officers.filter(o => o.department?.toLowerCase() === selectedDept.toLowerCase());
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 py-4 animate-fade-in text-slate-900 dark:text-slate-100">
+    <div className="max-w-6xl mx-auto space-y-8 py-4 animate-fade-in text-slate-200">
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+      {/* Title */}
+      <div className="flex justify-between items-center border-b border-slate-850 pb-5">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">Departmental Operations & SLAs</h2>
-          <p className="text-xs text-slate-550 mt-1">Real-time workloads, average SLA resolution hours, and resource allocations.</p>
+          <h2 className="text-2xl font-black text-white tracking-tight">Department Management</h2>
+          <p className="text-xs text-slate-450 mt-1 font-medium">
+            Registry overview of municipal crews. Track personnel volumes, incident backlogs, and SLA response ratings.
+          </p>
         </div>
-        
-        <div className="flex gap-2">
-          <Button
-            onClick={handleSlaCheck}
-            disabled={checkingSla}
-            className="bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold border-rose-500/20 text-xs py-2 px-3 flex items-center gap-1.5 shadow"
-          >
-            <ShieldAlert size={14} className={checkingSla ? 'animate-bounce' : ''} />
-            {checkingSla ? 'Checking...' : 'Run SLA Check'}
-          </Button>
-          <button
-            onClick={fetchAnalytics}
-            className="p-2.5 bg-white border border-slate-200 text-slate-600 hover:text-slate-800 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-350 dark:hover:text-white rounded-lg shadow-sm"
-          >
-            <RefreshCw size={14} />
-          </button>
-        </div>
+        <button
+          onClick={fetchAnalytics}
+          className="p-2.5 bg-slate-900 border border-slate-850 text-slate-400 hover:text-white rounded-xl transition-colors shadow shadow-slate-950"
+        >
+          <RefreshCw size={14} />
+        </button>
       </div>
 
-      {/* Aggregate metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 rounded-xl border border-blue-100 dark:border-blue-900/50">
-            <Building2 size={20} />
-          </div>
-          <div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block">Active Divisions</span>
-            <span className="text-xl font-black text-slate-800 dark:text-white">4 Departments</span>
-          </div>
-        </Card>
-
-        <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 rounded-xl border border-amber-100 dark:border-amber-900/50">
-            <Clock size={20} />
-          </div>
-          <div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block">Target SLA Deadline</span>
-            <span className="text-xl font-black text-slate-800 dark:text-white">24h - 7d Limits</span>
-          </div>
-        </Card>
-
-        <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
-            <CheckCircle2 size={20} />
-          </div>
-          <div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block">Open Complaints</span>
-            <span className="text-xl font-black text-slate-800 dark:text-white">{data?.totalOpen || 0} Issues</span>
-          </div>
-        </Card>
-
-        <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
-          <div className="p-3 bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400 rounded-xl border border-violet-100 dark:border-violet-900/50">
-            <Users size={20} />
-          </div>
-          <div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block">Resolved Jobs</span>
-            <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{data?.totalResolved || 0} Fixed</span>
-          </div>
-        </Card>
-      </div>
-
-      {/* Main Grid layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Main Split Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Left Column: Workload details */}
-        <div className="lg:col-span-8 space-y-6">
-          
-          {/* Section 1: Department workloads and SLAs */}
-          <div className="bg-white dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-5">
-            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-450 uppercase tracking-widest flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-2">
-              <BarChart2 size={14} className="text-emerald-500" />
-              Department Workload & Speed Indexes
-            </h3>
+        {/* Left Column: Department Logistics Table */}
+        <Card className="lg:col-span-8 p-5 bg-slate-900/30 border-slate-850 space-y-4 shadow-md">
+          <h3 className="text-xs font-black tracking-wider uppercase text-slate-450 border-b border-slate-850 pb-2.5 flex items-center gap-1.5">
+            <Building2 size={14} className="text-emerald-500 shrink-0" />
+            Active Municipal Departments
+          </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Box 1: Open workloads */}
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Open Backlogs per Division</h4>
-                <div className="space-y-3">
-                  {Object.entries(workloads).map(([dept, val]) => (
-                    <div key={dept} className="space-y-1">
-                      <div className="flex justify-between text-[10px] font-bold">
-                        <span className="text-slate-650 dark:text-slate-400">{dept}</span>
-                        <span className="text-slate-800 dark:text-slate-200">{val} open tickets</span>
-                      </div>
-                      <div className="w-full bg-slate-100 dark:bg-slate-850 h-2 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-emerald-500 rounded-full" 
-                          style={{ width: `${Math.min(val * 10, 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Box 2: Speed indexes */}
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Average SLA Resolution Times</h4>
-                <div className="space-y-3">
-                  {Object.entries(resolutionHours).map(([dept, val]) => (
-                    <div key={dept} className="space-y-1">
-                      <div className="flex justify-between text-[10px] font-bold">
-                        <span className="text-slate-650 dark:text-slate-400">{dept}</span>
-                        <span className="text-slate-850 dark:text-slate-200">{val} hours</span>
-                      </div>
-                      <div className="w-full bg-slate-100 dark:bg-slate-850 h-2 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-blue-500 rounded-full" 
-                          style={{ width: `${Math.min((val / 72) * 100, 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Section 2: Officer Performance Ratings */}
-          <div className="bg-white dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
-            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-455 uppercase tracking-widest flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-2">
-              <Award size={14} className="text-emerald-500" />
-              Officer Performance Ratings & Completion Stats
-            </h3>
-
-            {officerPerformance.length === 0 ? (
-              <p className="text-xs text-slate-500 py-6 text-center">No field officers registered yet.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-[10px]">
-                  <thead>
-                    <tr className="border-b border-slate-100 dark:border-slate-850 text-slate-400 font-black uppercase">
-                      <th className="py-2.5">Officer Name</th>
-                      <th>Department</th>
-                      <th>Completed Tasks</th>
-                      <th>Rating score</th>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs select-none">
+              <thead>
+                <tr className="border-b border-slate-850 text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-900/10">
+                  <th className="py-3.5 px-3">Department</th>
+                  <th className="py-3.5 px-3 text-center">Open Cases</th>
+                  <th className="py-3.5 px-3 text-center">Staff Available</th>
+                  <th className="py-3.5 px-3 text-center">Avg SLA Speed</th>
+                  <th className="py-3.5 px-3 text-center">Workload Index</th>
+                  <th className="py-3.5 px-3 text-center">Performance</th>
+                  <th className="py-3.5 px-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {departmentsList.map((dept) => {
+                  const isSelected = dept.name === selectedDept;
+                  return (
+                    <tr
+                      key={dept.name}
+                      onClick={() => setSelectedDept(dept.name)}
+                      className={`border-b border-slate-850/60 hover:bg-slate-900/40 cursor-pointer transition-colors ${
+                        isSelected ? 'bg-emerald-500/5 hover:bg-emerald-500/10' : ''
+                      }`}
+                    >
+                      <td className="py-3.5 px-3 font-bold text-white flex items-center gap-2">
+                        <Building2 size={12} className="text-emerald-500 shrink-0" />
+                        <span>{dept.name}</span>
+                      </td>
+                      <td className="py-3.5 px-3 text-center font-mono font-black text-slate-300">
+                        {dept.openCases}
+                      </td>
+                      <td className="py-3.5 px-3 text-center font-mono font-semibold text-slate-400">
+                        {dept.staff} Crews
+                      </td>
+                      <td className="py-3.5 px-3 text-center font-mono font-semibold text-slate-400">
+                        {dept.avgSla}
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <div className="flex items-center gap-2 justify-center">
+                          <div className="w-16 bg-slate-900 h-1.5 rounded-full overflow-hidden shrink-0">
+                            <div 
+                              className={`h-full rounded-full ${
+                                dept.currentLoad > 75 ? 'bg-rose-500' : dept.currentLoad > 40 ? 'bg-amber-500' : 'bg-emerald-500'
+                              }`}
+                              style={{ width: `${dept.currentLoad}%` }}
+                            />
+                          </div>
+                          <span className="font-mono text-[9px] text-slate-400 font-bold w-6">{dept.currentLoad}%</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-3 text-center font-semibold text-amber-500">
+                        <div className="flex items-center justify-center gap-0.5">
+                          <Star size={10} className="fill-amber-500 text-amber-500 shrink-0" />
+                          <span>{dept.perf}</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-3 text-right">
+                        <ChevronRight size={14} className="text-slate-500 group-hover:text-white transition-colors ml-auto" />
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-850 font-semibold text-slate-700 dark:text-slate-300">
-                    {officerPerformance.map((officer, index) => (
-                      <tr key={index} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20">
-                        <td className="py-3 font-bold text-slate-900 dark:text-white">{officer.name}</td>
-                        <td>{officer.department}</td>
-                        <td className="font-mono text-emerald-600 dark:text-emerald-400">{officer.completed} jobs</td>
-                        <td className="flex items-center gap-1 py-3 text-amber-500">
-                          <Star size={11} fill="currentColor" />
-                          <span className="font-bold">{officer.rating} / 5.0</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        {/* Right Column: Selected Department Details */}
+        <div className="lg:col-span-4 space-y-6">
+          <Card className="p-5 bg-slate-900/30 border-slate-850 space-y-4 shadow-md">
+            <h3 className="text-xs font-black tracking-wider uppercase text-white border-b border-slate-850 pb-2.5 flex items-center gap-1.5">
+              <Users size={14} className="text-emerald-500 shrink-0" />
+              {selectedDept} Personnel
+            </h3>
+
+            {deptOfficers.length === 0 ? (
+              <p className="text-slate-500 text-xs py-8 text-center font-bold">No officers assigned currently.</p>
+            ) : (
+              <div className="space-y-3.5">
+                {deptOfficers.map((off) => (
+                  <div key={off.id} className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl flex items-center gap-3">
+                    <img 
+                      src={`https://api.dicebear.com/7.x/bottts/svg?seed=${off.name}`}
+                      alt={off.name}
+                      className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-850 shrink-0 object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-bold text-white block truncate">{off.name}</span>
+                      <span className="text-[10px] text-slate-500 block truncate">{off.email}</span>
+                      <span className="text-[9px] font-bold text-emerald-400 font-mono mt-0.5 block">
+                        Rating: {off.performanceScore ? off.performanceScore.toFixed(1) : "5.0"} ★
+                      </span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase shrink-0 border ${
+                      off.active ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                    }`}>
+                      {off.active ? 'Active' : 'Offline'}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
-          </div>
-
-        </div>
-
-        {/* Right Column: AI Operational insights */}
-        <div className="lg:col-span-4 space-y-6">
-          
-          {/* AI insights block */}
-          <div className="bg-white dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
-            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-450 uppercase tracking-widest flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-2">
-              <Activity size={14} className="text-emerald-500" />
-              AI Operational Insights
-            </h3>
-
-            <div className="space-y-3.5">
-              <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/40 rounded-xl space-y-1">
-                <span className="text-[9px] text-emerald-650 dark:text-emerald-400 uppercase font-black tracking-wider block">Most Loaded Division</span>
-                <span className="text-xs font-bold text-slate-850 dark:text-white block">Public Works</span>
-                <p className="text-[10px] text-slate-550 leading-relaxed mt-1">
-                  Accounting for 60% of city-wide reports. Staff reallocation recommended.
-                </p>
-              </div>
-
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-900 rounded-xl space-y-1">
-                <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wider block">SLA Compliance Rate</span>
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">94.2% On-Time</span>
-                <p className="text-[10px] text-slate-550 leading-relaxed mt-1">
-                  Average resolution times are currently within 24 hours of target deadlines.
-                </p>
-              </div>
-
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-900 rounded-xl space-y-1">
-                <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wider block">Recurring Failures</span>
-                <span className="text-xs font-bold text-slate-850 dark:text-slate-250 block">Pothole Structural wearing</span>
-                <p className="text-[10px] text-slate-550 leading-relaxed mt-1">
-                  High occurrences in District 4. Recommending deep resurfacing instead of cold patch fixes.
-                </p>
-              </div>
-            </div>
-          </div>
-
+          </Card>
         </div>
 
       </div>

@@ -31,6 +31,12 @@ public class Incident {
     private String trackingId; // e.g. CL-2026-X8392
     private Integer supportCount;
     private java.util.List<String> supportedBy;
+    private Boolean hidden = false;
+    private Boolean pinned = false;
+    private Boolean locked = false;
+    private Boolean escalated = false;
+    private Double spamScore = 0.05;
+    private String moderator = "System";
     private Long closedAt;
     private Long createdAt;
     private Long updatedAt;

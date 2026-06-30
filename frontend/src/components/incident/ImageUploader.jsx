@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { UploadCloud, XCircle, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { validateImageFile } from '../../services/uploadService';
 
@@ -9,7 +9,27 @@ import { validateImageFile } from '../../services/uploadService';
 export default function ImageUploader({ selectedFile, onFileSelect, onFileRemove }) {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [hasLoadError, setHasLoadError] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Manage object URLs lifecycle to prevent memory leaks and constant image reloading
+  useEffect(() => {
+    if (!selectedFile) {
+      setPreviewUrl(null);
+      setHasLoadError(false);
+      return;
+    }
+
+    setHasLoadError(false);
+    const objectUrl = URL.createObjectURL(selectedFile);
+    setPreviewUrl(objectUrl);
+
+    // Revoke object URL on unmount or file change
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [selectedFile]);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -56,6 +76,7 @@ export default function ImageUploader({ selectedFile, onFileSelect, onFileRemove
   const handleRemove = (e) => {
     e.stopPropagation();
     setError(null);
+    setHasLoadError(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
     onFileRemove();
   };
@@ -97,15 +118,25 @@ export default function ImageUploader({ selectedFile, onFileSelect, onFileRemove
 
         {selectedFile ? (
           <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-slate-700 aspect-video flex items-center justify-center bg-slate-950">
-            <img
-              src={URL.createObjectURL(selectedFile)}
-              alt="Preview"
-              className="max-w-full max-h-full object-contain"
-            />
+            {hasLoadError ? (
+              <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400 bg-slate-900 w-full h-full rounded-lg">
+                <AlertCircle size={24} className="text-rose-500 mb-2" />
+                <span className="text-xs font-bold">Failed to load preview</span>
+                <span className="text-[10px] text-slate-500 mt-1">Please try another image file</span>
+              </div>
+            ) : (
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="max-w-full max-h-full object-contain"
+                onError={() => setHasLoadError(true)}
+              />
+            )}
             <button
               type="button"
               onClick={handleRemove}
               className="absolute top-2 right-2 p-1.5 bg-slate-950/80 hover:bg-rose-600 text-slate-300 hover:text-white rounded-full transition-all duration-200"
+              title="Remove Image"
             >
               <XCircle size={18} />
             </button>

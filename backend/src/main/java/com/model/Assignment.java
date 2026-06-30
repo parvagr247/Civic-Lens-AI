@@ -18,6 +18,7 @@ public class Assignment {
     private String incidentId;
     private String officerId;
     private String officerName;
+    private String department;
     private Long assignedAt;
     private Long deadline; // Timestamp
     private String priority; // P1, P2, P3, P4

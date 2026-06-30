@@ -21,6 +21,9 @@ public class CitizenProfile {
     private String avatarUrl;
     private String bio;
     private String coverImageUrl;
+    private String city;
+    private String state;
+    private String country;
     private Integer points;
     private String level; // Calculated dynamically from points (e.g. "Active Citizen")
     private Integer rank;  // Calculated dynamically relative to other profiles

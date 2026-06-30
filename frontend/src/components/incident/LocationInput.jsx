@@ -1,20 +1,27 @@
 import React, { useState } from 'react';
-import { MapPin, Navigation, Loader2 } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertTriangle } from 'lucide-react';
+import { useToast } from '../ui/ToastProvider';
 
 /**
  * LocationInput component.
  * Captures spatial coordinates and address strings, supporting HTML5 Geolocation autofill.
  */
 export default function LocationInput({ latitude, longitude, address, onChange }) {
+  const { toast } = useToast();
   const [detecting, setDetecting] = useState(false);
+  const [insecureWarning, setInsecureWarning] = useState(false);
 
   const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+    // Detect whether browser supports geolocation and is running in a secure context
+    if (!navigator.geolocation || !window.isSecureContext) {
+      setInsecureWarning(true);
+      toast('Location detection is blocked on HTTP connections.', 'warning');
       return;
     }
 
+    setInsecureWarning(false);
     setDetecting(true);
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const lat = position.coords.latitude;
@@ -36,12 +43,15 @@ export default function LocationInput({ latitude, longitude, address, onChange }
           if (response.ok) {
             const data = await response.json();
             onChange('address', data.display_name || `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+            toast('Location coordinates auto-filled successfully!', 'success');
           } else {
             onChange('address', `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+            toast('Location coordinates captured.', 'success');
           }
         } catch (error) {
           console.warn('Reverse geocoding failed, falling back to coordinate labels.', error);
           onChange('address', `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+          toast('Location coordinates captured.', 'success');
         } finally {
           setDetecting(false);
         }
@@ -49,7 +59,21 @@ export default function LocationInput({ latitude, longitude, address, onChange }
       (error) => {
         console.error('Error fetching position', error);
         setDetecting(false);
-        alert(`Failed to detect location: ${error.message}`);
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            toast('Location permission denied. Please grant permission in browser settings or enter manually.', 'error');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            toast('Position unavailable. Please specify coordinates manually.', 'error');
+            break;
+          case error.TIMEOUT:
+            toast('Location detection request timed out. Please try again or enter manually.', 'error');
+            break;
+          default:
+            toast(`Failed to detect location: ${error.message}`, 'error');
+            break;
+        }
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
@@ -81,6 +105,41 @@ export default function LocationInput({ latitude, longitude, address, onChange }
           )}
         </button>
       </div>
+
+      {/* Insecure Context warning alerts panel */}
+      {insecureWarning && (
+        <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-900/40 text-amber-400 space-y-3 animate-fade-in">
+          <div className="flex items-start gap-2.5 text-xs font-bold leading-normal">
+            <AlertTriangle className="shrink-0 mt-0.5 text-amber-400 animate-pulse" size={16} />
+            <div>
+              <p>Current location is only available when CivicLens is accessed over HTTPS.</p>
+              <p className="text-[10px] text-slate-400 font-semibold mt-1">Please select an action below to proceed:</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2.5 pl-6">
+            <button
+              type="button"
+              onClick={() => {
+                setInsecureWarning(false);
+                toast('Please enter coordinates and address manually below.', 'info');
+              }}
+              className="text-[10px] bg-amber-500 text-slate-955 px-3 py-1.5 rounded-lg font-extrabold hover:bg-amber-400 transition-all duration-200"
+            >
+              Enter location manually
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setInsecureWarning(false);
+                toast('Continuing without automatic location.', 'info');
+              }}
+              className="text-[10px] border border-amber-900/60 text-amber-300 hover:bg-amber-950/40 px-3 py-1.5 rounded-lg font-bold transition-all duration-200"
+            >
+              Continue without automatic location
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>

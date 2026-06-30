@@ -129,6 +129,7 @@ public class OfficerServiceImpl implements OfficerService {
                 .incidentId(incidentId)
                 .officerId(officerId)
                 .officerName(officer.getName())
+                .department(officer.getDepartment())
                 .assignedAt(System.currentTimeMillis())
                 .deadline(deadline)
                 .priority(priority)

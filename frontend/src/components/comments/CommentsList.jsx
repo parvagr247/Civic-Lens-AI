@@ -10,7 +10,7 @@ import '../../styles/comments/Comments.css';
  * CommentsList component.
  * Recursively renders Reddit-style threaded comments and nested replies.
  */
-export default function CommentsList({ comments, incidentId, onCommentAdded, onCommentLiked, parentId = null, depth = 0 }) {
+export default function CommentsList({ comments, incidentId, onCommentAdded, onCommentLiked, parentId = null, depth = 0, incident = null, assignment = null }) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentUser = getCurrentUser();
@@ -57,26 +57,32 @@ export default function CommentsList({ comments, incidentId, onCommentAdded, onC
           >
             {/* Comment details */}
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span 
                   onClick={() => navigate(`/profile/${comment.userId}`)}
                   className="text-[10px] font-bold text-slate-800 dark:text-slate-200 cursor-pointer hover:underline hover:text-emerald-500 transition-colors"
                 >
                   {comment.userName}
                 </span>
+                {incident && comment.userName === incident.reportedBy && (
+                  <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">Citizen</span>
+                )}
+                {assignment && comment.userName === assignment.officerName && (
+                  <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">Lead Officer</span>
+                )}
                 <span className="text-[8px] text-slate-500 font-mono">
                   {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
               
-              <p className="text-[11px] text-slate-650 dark:text-slate-350 leading-relaxed pl-1">{comment.content}</p>
+              <p className="text-[11px] text-slate-650 dark:text-slate-355 leading-relaxed pl-1">{comment.content}</p>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-3 text-[9px] font-bold text-slate-500 pl-1 pt-0.5">
+              <div className="flex items-center gap-3 text-[9px] font-bold text-slate-505 pl-1 pt-0.5">
                 <button 
                   onClick={() => onCommentLiked(comment.id)}
                   className={`flex items-center gap-1 transition-colors duration-200 ${
-                    hasLiked ? 'text-emerald-500 dark:text-emerald-400' : 'hover:text-slate-700 dark:hover:text-slate-300'
+                    hasLiked ? 'text-emerald-505 dark:text-emerald-400' : 'hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
                 >
                   <ThumbsUp size={10} />
@@ -104,7 +110,7 @@ export default function CommentsList({ comments, incidentId, onCommentAdded, onC
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Post nested reply..."
-                  className="flex-1 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-850 rounded-lg px-2.5 py-1.5 text-[10px] text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500/50"
+                  className="flex-1 bg-slate-50 dark:bg-slate-955/60 border border-slate-205 dark:border-slate-850 rounded-lg px-2.5 py-1.5 text-[10px] text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500/50"
                   autoFocus
                 />
                 <button
@@ -129,6 +135,8 @@ export default function CommentsList({ comments, incidentId, onCommentAdded, onC
               onCommentLiked={onCommentLiked}
               parentId={comment.id}
               depth={depth + 1}
+              incident={incident}
+              assignment={assignment}
             />
 
           </div>

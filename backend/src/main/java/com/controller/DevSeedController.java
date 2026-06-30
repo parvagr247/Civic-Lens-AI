@@ -26,6 +26,7 @@ public class DevSeedController {
     private final CommentFirestoreRepository commentRepository;
     private final UserFirestoreRepository userRepository;
     private final AssignmentFirestoreRepository assignmentRepository;
+    private final CitizenProfileFirestoreRepository profileRepository;
 
     @PostMapping("/seed")
     public ResponseEntity<ApiResponse<Map<String, Object>>> seedDatabase() {
@@ -59,8 +60,10 @@ public class DevSeedController {
         stats.put("officersSeeded", createdOfficers.size());
 
         // 3. Seed 60 Citizens
+        String[] mockCities = {"Portland", "Seattle", "Austin", "Denver", "Boston"};
         for (int i = 1; i <= 60; i++) {
             String id = "user-citizen-" + i;
+            String name = "Citizen " + getNamesList()[i % getNamesList().length];
             User user = User.builder()
                     .id(id)
                     .email("citizen" + i + "@mail.com")
@@ -68,6 +71,32 @@ public class DevSeedController {
                     .createdAt(System.currentTimeMillis() - (86400000L * i))
                     .build();
             userRepository.save(user);
+
+            // Seed Profile
+            int points = (60 - i) * 35 + 15;
+            String level = calculateLevel(points);
+            int submitted = (60 - i) / 2 + 2;
+            int resolved = (60 - i) / 3 + 1;
+            String city = mockCities[i % mockCities.length];
+
+            CitizenProfile profile = CitizenProfile.builder()
+                    .userId(id)
+                    .name(name)
+                    .avatarUrl("https://api.dicebear.com/7.x/bottts/svg?seed=citizen" + i)
+                    .bio("Active citizen contributor based in " + city + ".")
+                    .city(city)
+                    .state(city.equals("Portland") ? "Oregon" : city.equals("Seattle") ? "Washington" : city.equals("Austin") ? "Texas" : city.equals("Denver") ? "Colorado" : "Massachusetts")
+                    .country("United States")
+                    .points(points)
+                    .level(level)
+                    .rank(i)
+                    .reportsSubmitted(submitted)
+                    .reportsResolved(resolved)
+                    .unlockedAchievements(points >= 100 ? List.of("first_report", "five_reports", "safety_hero") : List.of("first_report"))
+                    .savedIncidents(List.of())
+                    .updatedAt(System.currentTimeMillis())
+                    .build();
+            profileRepository.save(profile);
         }
         stats.put("citizensSeeded", 60);
 
@@ -161,5 +190,15 @@ public class DevSeedController {
             "Ivan", "Judy", "Mallory", "Niaj", "Olivia", "Peggy", "Rupert", "Sybil",
             "Trent", "Victor", "Walter", "Zoe"
         };
+    }
+
+    private String calculateLevel(int points) {
+        if (points < 50) return "New Citizen";
+        if (points < 150) return "Active Citizen";
+        if (points < 300) return "Community Helper";
+        if (points < 600) return "City Guardian";
+        if (points < 1000) return "Urban Hero";
+        if (points < 2000) return "AI Civic Ambassador";
+        return "Smart City Champion";
     }
 }

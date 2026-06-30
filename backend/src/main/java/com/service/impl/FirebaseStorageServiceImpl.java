@@ -1,7 +1,7 @@
 package com.service.impl;
 
 import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
 import com.exception.ValidationException;
 import com.service.StorageService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,12 +24,17 @@ import java.util.UUID;
 @Service
 public class FirebaseStorageServiceImpl implements StorageService {
 
-    private final Bucket storageBucket;
+    private final Storage storage;
+    private final String bucketName;
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "webp");
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
-    public FirebaseStorageServiceImpl(@Autowired(required = false) Bucket storageBucket) {
-        this.storageBucket = storageBucket;
+    @Autowired
+    public FirebaseStorageServiceImpl(
+            Storage storage,
+            @org.springframework.beans.factory.annotation.Value("${app.firebase.storage-bucket}") String bucketName) {
+        this.storage = storage;
+        this.bucketName = bucketName;
     }
 
     @Override
@@ -54,13 +59,10 @@ public class FirebaseStorageServiceImpl implements StorageService {
             throw new ValidationException("Only JPG, JPEG, PNG, and WEBP formats are allowed.");
         }
 
-        // Resilient fallback for unconfigured firebase environments
-        if (storageBucket == null) {
-            log.warn("Firebase Storage Bucket is unconfigured. Returning a high-quality mock image URL for demonstration.");
-            return ImageUploadResult.builder()
-                    .storagePath("uploads/mock/" + incidentId + "/" + originalFilename)
-                    .downloadUrl("https://images.unsplash.com/photo-1515162305285-0293e4767cc2?q=80&w=600&auto=format&fit=crop")
-                    .build();
+        // Throw exception if the storage client is null or bucket name is empty
+        if (storage == null || bucketName == null || bucketName.trim().isEmpty()) {
+            log.error("Firebase Storage is unconfigured or null. Upload aborted for incident: {}", incidentId);
+            throw new com.exception.FirebaseException("Firebase Storage is null or unconfigured. Cannot upload image.");
         }
 
         LocalDate now = LocalDate.now();
@@ -69,38 +71,44 @@ public class FirebaseStorageServiceImpl implements StorageService {
         String uniqueFilename = UUID.randomUUID() + "." + extension;
         String blobPath = String.format("uploads/%d/%02d/%s/%s", year, month, incidentId, uniqueFilename);
 
+        log.info("Upload started: filename='{}', contentType='{}', bucket='{}', destinationPath='{}'", 
+                 originalFilename, file.getContentType(), bucketName, blobPath);
+
         try {
-            log.info("Uploading file to path: {}", blobPath);
             byte[] bytes = file.getBytes();
             
             // Generate a secure, unique download token
             String downloadToken = UUID.randomUUID().toString();
             
             // Upload to Google Cloud Storage setting the firebase token metadata
-            com.google.cloud.storage.BlobId blobId = com.google.cloud.storage.BlobId.of(storageBucket.getName(), blobPath);
+            com.google.cloud.storage.BlobId blobId = com.google.cloud.storage.BlobId.of(bucketName, blobPath);
             com.google.cloud.storage.BlobInfo blobInfo = com.google.cloud.storage.BlobInfo.newBuilder(blobId)
                     .setContentType(file.getContentType())
                     .setMetadata(java.util.Collections.singletonMap("firebaseStorageDownloadTokens", downloadToken))
                     .build();
-            storageBucket.getStorage().create(blobInfo, bytes);
+            
+            log.info("Uploading bytes to Google Cloud Storage bucket...");
+            storage.create(blobInfo, bytes);
+            log.info("Upload completed: blob path='{}'", blobPath);
             
             // Construct Alt Media download link with download token (Standard Firebase format)
             String publicUrl = String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
-                    storageBucket.getName(),
+                    bucketName,
                     URLEncoder.encode(blobPath, StandardCharsets.UTF_8.name()),
                     downloadToken);
             
-            log.info("File uploaded successfully. URL: {}", publicUrl);
+            log.info("Generated download URL: '{}'", publicUrl);
             return ImageUploadResult.builder()
                     .storagePath(blobPath)
                     .downloadUrl(publicUrl)
                     .build();
         } catch (IOException e) {
-            log.error("Failed to read image bytes during upload", e);
+            log.error("Failed to read image bytes during upload. Filename: {}, Bucket: {}", originalFilename, bucketName, e);
             throw new ValidationException("Unable to process uploaded file bytes: " + e.getMessage());
         } catch (Exception e) {
-            log.error("Failed to upload image file to Google Firebase Storage", e);
-            throw new com.exception.FirebaseException("Failed to upload image to Firebase Storage", e);
+            log.error("Failed to upload image file to Google Firebase Storage. Filename: {}, Bucket: {}, BlobPath: {}. Stacktrace:", 
+                      originalFilename, bucketName, blobPath, e);
+            throw new com.exception.FirebaseException("Failed to upload image to Firebase Storage: " + e.getMessage(), e);
         }
     }
 

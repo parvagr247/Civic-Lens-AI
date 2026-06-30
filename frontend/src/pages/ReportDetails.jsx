@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 import { getIncidentById, overrideIncident } from '../services/issueService';
 import { getIncidentAnalysis } from '../services/analysisService';
 import { getRiskByIncidentId } from '../services/riskService';
@@ -19,7 +22,7 @@ import CommentsList from '../components/comments/CommentsList';
 import { 
   ArrowLeft, MapPin, Calendar, User, Shield, AlertTriangle, 
   Sparkles, CheckCircle2, Clipboard, Clock, MessageSquare, 
-  Paperclip, Activity, Send, Loader2, GitCommit, Settings, HelpCircle, Printer, CheckCircle, TrendingUp
+  Paperclip, Activity, Send, Loader2, GitCommit, Settings, HelpCircle, Printer, CheckCircle, TrendingUp, XCircle, FileText, Image as ImageIcon
 } from 'lucide-react';
 import { useToast } from '../components/ui/ToastProvider';
 
@@ -28,13 +31,16 @@ import '../styles/comments/Comments.css';
 
 /**
  * ReportDetails page component.
- * Redesigned report details organized into distinct visual cards.
+ * Case-management workspace with advanced PDF certificate downloads, evidence zoom,
+ * and lazy-loaded contextual metrics tabs.
  */
 export default function ReportDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentUser = getCurrentUser();
+
+  const certificateRef = useRef(null);
 
   // Data states
   const [incident, setIncident] = useState(null);
@@ -43,14 +49,14 @@ export default function ReportDetails() {
   const [assignment, setAssignment] = useState(null);
   const [comments, setComments] = useState([]);
   
-  // Day 6 AI Dispatch & Verification states
+  // Dispatch & Verification states
   const [aiDispatchRec, setAiDispatchRec] = useState(null);
   const [loadingDispatchRec, setLoadingDispatchRec] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verificationFeedback, setVerificationFeedback] = useState('');
   const [applyingDispatch, setApplyingDispatch] = useState(false);
 
-  // Day 7 AI Agent states
+  // AI timelines & metrics
   const [predictions, setPredictions] = useState(null);
   const [duplicateCheck, setDuplicateCheck] = useState(null);
   const [aiTimeline, setAiTimeline] = useState([]);
@@ -61,19 +67,33 @@ export default function ReportDetails() {
   const [error, setError] = useState(null);
   const [newCommentText, setNewCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState(null);
 
-  // Day 7 Override Form States
+  // Override Form States
   const [overrideCategory, setOverrideCategory] = useState('ROADS');
   const [overridePriority, setOverridePriority] = useState('P2');
   const [overrideStatus, setOverrideStatus] = useState('REPORTED');
   const [savingOverride, setSavingOverride] = useState(false);
+
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Lazy loading tab cache tracker
+  const [loadedTabs, setLoadedTabs] = useState({
+    overview: true,
+    'ai-analysis': false,
+    timeline: false,
+    evidence: false,
+    comments: false,
+    history: false,
+    resolution: false
+  });
 
   const fetchAllDetails = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Load primary incident
+      // Load primary incident details immediately
       const incRes = await getIncidentById(id);
       if (!incRes.success || !incRes.data) {
         throw new Error('Incident not found.');
@@ -83,31 +103,18 @@ export default function ReportDetails() {
       setOverrideCategory(incData.category || 'ROADS');
       setOverrideStatus(incData.status || 'REPORTED');
 
-      // Load auxiliary details concurrently
-      const [analysisRes, riskRes, assignmentRes, commentsRes] = await Promise.allSettled([
-        getIncidentAnalysis(id),
-        getRiskByIncidentId(id),
-        getAssignmentForIncident(id),
-        getComments(id)
-      ]);
-
-      if (analysisRes.status === 'fulfilled' && analysisRes.value.success) {
-        setAnalysis(analysisRes.value.data);
-      }
-      if (riskRes.status === 'fulfilled' && riskRes.value.success) {
-        setRisk(riskRes.value.data);
-      }
-      if (assignmentRes.status === 'fulfilled' && assignmentRes.value.success) {
-        setAssignment(assignmentRes.value.data);
-        if (assignmentRes.value.data) {
-          setOverridePriority(assignmentRes.value.data.priority || 'P2');
+      // Pre-fetch assignment immediately for the metadata sidebar
+      try {
+        const assignmentRes = await getAssignmentForIncident(id);
+        if (assignmentRes.success && assignmentRes.data) {
+          setAssignment(assignmentRes.data);
+          setOverridePriority(assignmentRes.data.priority || 'P2');
         }
-      }
-      if (commentsRes.status === 'fulfilled' && commentsRes.value.success) {
-        setComments(commentsRes.value.data || []);
+      } catch (assErr) {
+        console.warn("Failed to load assignment on mount", assErr);
       }
 
-      // Fetch AI Dispatch recommendation if current user is an Admin
+      // Fetch AI Dispatch recommendation if Admin
       const isAdminUser = currentUser?.role === 'ADMIN' || currentUser?.role?.toUpperCase() === 'ADMIN';
       if (isAdminUser && ['REPORTED', 'INVESTIGATING'].includes(incData.status)) {
         setLoadingDispatchRec(true);
@@ -123,28 +130,16 @@ export default function ReportDetails() {
         }
       }
 
-      // Fetch Day 7 AI Agent metrics (predictions, duplicates, and timelines)
-      setLoadingAiData(true);
-      try {
-        const [predRes, dupRes, timelineRes] = await Promise.allSettled([
-          getIncidentPredictions(id),
-          getDuplicateCheck(id),
-          getAiTimeline(id)
-        ]);
-        if (predRes.status === 'fulfilled' && predRes.value.success) {
-          setPredictions(predRes.value.data);
-        }
-        if (dupRes.status === 'fulfilled' && dupRes.value.success) {
-          setDuplicateCheck(dupRes.value.data);
-        }
-        if (timelineRes.status === 'fulfilled' && timelineRes.value.success) {
-          setAiTimeline(timelineRes.value.data || []);
-        }
-      } catch (aiErr) {
-        console.warn("AI metadata retrieval failed", aiErr);
-      } finally {
-        setLoadingAiData(false);
-      }
+      // Reset loaded tabs tracker
+      setLoadedTabs({
+        overview: true,
+        'ai-analysis': false,
+        timeline: false,
+        evidence: false,
+        comments: false,
+        history: false,
+        resolution: false
+      });
 
     } catch (err) {
       console.error(err);
@@ -154,11 +149,84 @@ export default function ReportDetails() {
     }
   };
 
+  // Centralized Tab-Specific Lazy Loading
+  useEffect(() => {
+    if (!id || !incident) return;
+
+    const loadTabSpecificData = async () => {
+      if (loadedTabs[activeTab]) return;
+
+      if (activeTab === 'ai-analysis') {
+        try {
+          const [analysisRes, predRes, dupRes] = await Promise.allSettled([
+            getIncidentAnalysis(id),
+            getIncidentPredictions(id),
+            getDuplicateCheck(id)
+          ]);
+          if (analysisRes.status === 'fulfilled' && analysisRes.value.success) {
+            setAnalysis(analysisRes.value.data);
+          }
+          if (predRes.status === 'fulfilled' && predRes.value.success) {
+            setPredictions(predRes.value.data);
+          }
+          if (dupRes.status === 'fulfilled' && dupRes.value.success) {
+            setDuplicateCheck(dupRes.value.data);
+          }
+        } catch (err) {
+          console.warn("Failed to load AI Analysis tab data", err);
+        }
+      } else if (activeTab === 'timeline') {
+        try {
+          const [riskRes, timelineRes] = await Promise.allSettled([
+            getRiskByIncidentId(id),
+            getAiTimeline(id)
+          ]);
+          if (riskRes.status === 'fulfilled' && riskRes.value.success) {
+            setRisk(riskRes.value.data);
+          }
+          if (timelineRes.status === 'fulfilled' && timelineRes.value.success) {
+            setAiTimeline(timelineRes.value.data || []);
+          }
+        } catch (err) {
+          console.warn("Failed to load Timeline tab data", err);
+        }
+      } else if (activeTab === 'comments') {
+        try {
+          const commentsRes = await getComments(id);
+          if (commentsRes.success) {
+            setComments(commentsRes.data || []);
+          }
+        } catch (err) {
+          console.warn("Failed to load Comments data", err);
+        }
+      } else if (activeTab === 'resolution') {
+        try {
+          const assignmentRes = await getAssignmentForIncident(id);
+          if (assignmentRes.success) {
+            setAssignment(assignmentRes.data);
+            if (assignmentRes.data) {
+              setOverridePriority(assignmentRes.data.priority || 'P2');
+            }
+          }
+        } catch (err) {
+          console.warn("Failed to load Resolution data", err);
+        }
+      }
+
+      setLoadedTabs(prev => ({ ...prev, [activeTab]: true }));
+    };
+
+    loadTabSpecificData();
+  }, [activeTab, id, incident]);
+
+  useEffect(() => {
+    fetchAllDetails();
+  }, [id]);
+
   const handleApplyRecommendation = async () => {
     if (!aiDispatchRec || !aiDispatchRec.recommendedOfficerId) return;
     setApplyingDispatch(true);
     try {
-      // Calculate SLA deadline: current time + estimated hours * 3600000ms
       const deadline = Date.now() + (aiDispatchRec.estimatedHours || 24) * 3600000;
       const res = await assignIncident(
         id,
@@ -215,10 +283,6 @@ export default function ReportDetails() {
     }
   };
 
-  useEffect(() => {
-    fetchAllDetails();
-  }, [id]);
-
   const handlePostComment = async () => {
     if (!newCommentText.trim()) return;
     setSubmittingComment(true);
@@ -236,30 +300,172 @@ export default function ReportDetails() {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status?.toUpperCase()) {
-      case 'RESOLVED': return 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/60';
-      case 'IN_PROGRESS': return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/60';
-      case 'INVESTIGATING': return 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/60';
-      case 'REPORTED':
-      default: return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800';
+  const handleDownloadPdf = async () => {
+    const element = certificateRef.current;
+    if (!element) return;
+
+    setGeneratingPdf(true);
+    toast('Generating official resolution certificate PDF...', 'info');
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2, // High DPI density
+        useCORS: true,
+        backgroundColor: '#070b19',
+        logging: false
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: 'a4'
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      
+      const width = imgWidth * ratio;
+      const height = imgHeight * ratio;
+      
+      const x = (pdfWidth - width) / 2;
+      const y = (pdfHeight - height) / 2;
+
+      pdf.addImage(imgData, 'PNG', x, y, width, height);
+      pdf.save(`CivicLens-Certificate-${incident.id?.substring(0, 8).toUpperCase()}.pdf`);
+      toast('Certificate downloaded successfully!', 'success');
+    } catch (err) {
+      console.error(err);
+      toast('Failed to generate PDF certificate.', 'error');
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority?.toUpperCase()) {
-      case 'P1': return 'bg-red-100 text-red-800 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/60';
-      case 'P2': return 'bg-orange-100 text-orange-800 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/60';
-      default: return 'bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-400';
+  // Compile Dynamic Chronological Activity History
+  const getHistoryTimeline = () => {
+    if (!incident) return [];
+
+    const timeline = [];
+
+    // 1. Report Submitted
+    timeline.push({
+      id: 'submitted',
+      action: 'Report Submitted',
+      actor: incident.anonymous ? 'Anonymous Citizen' : (incident.reportedBy || 'Citizen'),
+      timestamp: incident.createdAt,
+      icon: 'FileText',
+      note: `Incident reported with category ${incident.category || 'PENDING'}.`
+    });
+
+    // 2. AI Analysis Completed
+    if (analysis) {
+      timeline.push({
+        id: 'analysis',
+        action: 'AI Analysis Completed',
+        actor: 'Gemini Vision Agent',
+        timestamp: incident.createdAt + 2000,
+        icon: 'Sparkles',
+        note: `Confidence score: ${analysis.confidence ? Math.round(analysis.confidence * 100) : 92}%. Suggested Category: ${incident.category || 'ROADS'}.`
+      });
+    }
+
+    // 3. Assigned to Department
+    if (assignment) {
+      timeline.push({
+        id: 'assigned',
+        action: `Assigned to ${assignment.department || 'Public Works'}`,
+        actor: 'Municipal Dispatcher',
+        timestamp: assignment.assignedAt || (incident.createdAt + 10000),
+        icon: 'User',
+        note: `Lead officer: ${assignment.officerName || 'Field Crew'}. Priority: ${assignment.priority || 'P2'}.`
+      });
+
+      // 4. Officer Accepted
+      if (['ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CLOSED'].includes(assignment.status?.toUpperCase())) {
+        timeline.push({
+          id: 'accepted',
+          action: 'Officer Accepted',
+          actor: assignment.officerName || 'Field Officer',
+          timestamp: assignment.acceptedAt || (incident.createdAt + 30000),
+          icon: 'CheckCircle2',
+          note: 'Dispatch confirmed. Officer traveling to coordinates.'
+        });
+      }
+
+      // 5. Inspection Started
+      if (['IN_PROGRESS', 'COMPLETED', 'CLOSED'].includes(assignment.status?.toUpperCase())) {
+        timeline.push({
+          id: 'started',
+          action: 'Inspection Started',
+          actor: assignment.officerName || 'Field Officer',
+          timestamp: assignment.startedAt || (incident.createdAt + 60000),
+          icon: 'Clock',
+          note: 'On-site investigation initiated. Field work in progress.'
+        });
+      }
+
+      // 6. Resolution Uploaded
+      if (['COMPLETED', 'CLOSED'].includes(assignment.status?.toUpperCase())) {
+        timeline.push({
+          id: 'completed',
+          action: 'Resolution Uploaded',
+          actor: assignment.officerName || 'Field Officer',
+          timestamp: assignment.completedAt || (incident.createdAt + 120000),
+          icon: 'CheckCircle',
+          note: assignment.completionReport || 'Standard maintenance successfully executed and verified.'
+        });
+      }
+    }
+
+    // 7. Report Closed
+    if (incident.status === 'CLOSED' || incident.closedAt) {
+      timeline.push({
+        id: 'closed',
+        action: 'Report Closed',
+        actor: 'Citizen Verification',
+        timestamp: incident.closedAt || (incident.updatedAt || Date.now()),
+        icon: 'Shield',
+        note: incident.citizenFeedback || 'Resolution verified by citizen. Ticket archived.'
+      });
+    }
+
+    return timeline.sort((a, b) => a.timestamp - b.timestamp);
+  };
+
+  const renderHistoryIcon = (iconName) => {
+    switch (iconName) {
+      case 'FileText': return <FileText size={13} className="text-blue-400" />;
+      case 'Sparkles': return <Sparkles size={13} className="text-emerald-400" />;
+      case 'User': return <User size={13} className="text-amber-400" />;
+      case 'CheckCircle2': return <CheckCircle2 size={13} className="text-teal-400" />;
+      case 'Clock': return <Clock size={13} className="text-indigo-400" />;
+      case 'CheckCircle': return <CheckCircle size={13} className="text-emerald-400" />;
+      case 'Shield': return <Shield size={13} className="text-slate-400" />;
+      default: return <GitCommit size={13} className="text-slate-500" />;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status?.toUpperCase()) {
+      case 'RESOLVED': return 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-450 dark:border-emerald-900/60';
+      case 'CLOSED': return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-955/30 dark:text-blue-400 dark:border-blue-900/60';
+      case 'IN_PROGRESS': return 'bg-blue-105 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/60';
+      case 'INVESTIGATING': return 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-955/30 dark:text-amber-450 dark:border-amber-900/60';
+      case 'REPORTED':
+      default: return 'bg-slate-100 text-slate-700 border-slate-205 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800';
     }
   };
 
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6 py-6">
-        <div className="flex items-center gap-2">
-          <SkeletonLoader variant="text" count={1} className="w-1/4" />
-        </div>
+        <SkeletonLoader variant="text" count={1} className="w-1/4" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
             <SkeletonLoader variant="card" count={3} />
@@ -275,11 +481,7 @@ export default function ReportDetails() {
   if (error) {
     return (
       <div className="max-w-xl mx-auto py-12">
-        <ErrorState 
-          title="Error Loading Report" 
-          message={error} 
-          onRetry={fetchAllDetails} 
-        />
+        <ErrorState title="Error Loading Report" message={error} onRetry={fetchAllDetails} />
       </div>
     );
   }
@@ -351,7 +553,7 @@ export default function ReportDetails() {
                   
                   <div className="space-y-1">
                     <h3 className="text-lg font-black text-slate-900 dark:text-white leading-snug">{incident.title}</h3>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-500 dark:text-slate-450 text-[10px] font-semibold pt-1">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-505 dark:text-slate-450 text-[10px] font-semibold pt-1">
                       <span className="flex items-center gap-1">
                         <User size={12} className="text-emerald-500" />
                         {isAnon ? 'Anonymous Citizen' : incident.reportedBy}
@@ -363,14 +565,14 @@ export default function ReportDetails() {
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-655 dark:text-slate-350 leading-relaxed bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-100 dark:border-slate-900">
+                  <p className="text-xs text-slate-655 dark:text-slate-350 leading-relaxed bg-slate-50 dark:bg-slate-955/20 p-4 rounded-xl border border-slate-105 dark:border-slate-900">
                     {incident.description}
                   </p>
                 </Card>
 
                 {/* Location Grid */}
                 <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-855 shadow-sm space-y-4">
-                  <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2">
+                  <h4 className="text-xs font-bold text-slate-505 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2">
                     Location Coordinates
                   </h4>
                   
@@ -381,13 +583,13 @@ export default function ReportDetails() {
                         {incident.location?.address || 'Unavailable'}
                       </span>
                     </div>
-                    <div className="p-3 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-150 dark:border-slate-900">
+                    <div className="p-3 bg-slate-50 dark:bg-slate-955/40 rounded-xl border border-slate-150 dark:border-slate-900">
                       <span className="text-[9px] text-slate-400 uppercase tracking-wider block font-bold">Latitude</span>
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1 block font-mono">
                         {incident.location?.latitude || 'N/A'}
                       </span>
                     </div>
-                    <div className="p-3 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-150 dark:border-slate-900">
+                    <div className="p-3 bg-slate-50 dark:bg-slate-955/40 rounded-xl border border-slate-150 dark:border-slate-900">
                       <span className="text-[9px] text-slate-400 uppercase tracking-wider block font-bold">Longitude</span>
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1 block font-mono">
                         {incident.location?.longitude || 'N/A'}
@@ -395,11 +597,10 @@ export default function ReportDetails() {
                     </div>
                   </div>
 
-                  {/* Simulated mini Map visualization */}
                   <div className="h-32 w-full rounded-xl bg-slate-50 border border-slate-200 dark:bg-slate-950 dark:border-slate-855 flex flex-col items-center justify-center text-center p-4 relative overflow-hidden">
                     <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#10b981_1.5px,transparent_1.5px)] [background-size:16px_16px]" />
                     <MapPin size={20} className="text-emerald-500 animate-bounce relative z-10" />
-                    <span className="text-[10px] text-slate-500 font-bold mt-2 relative z-10">Smart City Mapping Grid</span>
+                    <span className="text-[10px] text-slate-505 font-bold mt-2 relative z-10">Smart City Mapping Grid</span>
                     <span className="text-[9px] text-slate-400 font-mono mt-0.5 relative z-10">
                       Coords: [{incident.location?.latitude || '0.0000'}, {incident.location?.longitude || '0.0000'}]
                     </span>
@@ -410,11 +611,11 @@ export default function ReportDetails() {
 
             {activeTab === 'ai-analysis' && (
               <>
-                {/* AI Dispatch Suggestion */}
+                {/* AI Dispatch Routing Recommendation */}
                 {(currentUser?.role === 'ADMIN' || currentUser?.role?.toUpperCase() === 'ADMIN') && !assignment && ['REPORTED', 'INVESTIGATING'].includes(incident.status) && (
-                  <Card className="p-6 bg-gradient-to-r from-emerald-500/5 to-blue-500/5 dark:from-emerald-950/10 dark:to-blue-950/10 border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <Card className="p-6 bg-gradient-to-r from-emerald-500/5 to-blue-500/5 dark:from-emerald-950/10 dark:to-blue-950/10 border-slate-200 dark:border-slate-800 shadow-sm space-y-4 animate-scale-in">
                     <h4 className="text-xs font-black text-slate-700 dark:text-slate-350 uppercase tracking-widest flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-855 pb-2">
-                      <Sparkles className="text-emerald-500" size={15} />
+                      <Sparkles className="text-emerald-500 animate-pulse" size={15} />
                       AI Dispatch Suggestion
                     </h4>
                     {loadingDispatchRec ? (
@@ -447,50 +648,92 @@ export default function ReportDetails() {
                           <Button
                             onClick={handleApplyRecommendation}
                             disabled={applyingDispatch}
-                            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs py-2 shadow-sm"
+                            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs py-2 shadow-sm animate-scale-in"
                           >
                             {applyingDispatch ? 'Applying Routing...' : 'Apply AI Dispatch Route'}
                           </Button>
                         )}
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-500">AI Dispatch routing recommendations are unavailable.</p>
+                      <p className="text-xs text-slate-550">AI Dispatch routing recommendations are unavailable.</p>
                     )}
                   </Card>
                 )}
 
-                {/* AI Vision Diagnostics */}
-                <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-855 shadow-sm space-y-4">
-                  <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2 flex items-center gap-1.5">
-                    <Sparkles className="text-emerald-500 animate-pulse" size={14} />
+                {/* AI Diagnostics Report */}
+                <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-855 shadow-sm space-y-5">
+                  <h4 className="text-xs font-bold text-slate-505 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2 flex items-center gap-1.5">
+                    <Sparkles className="text-emerald-500" size={14} />
                     AI Vision Diagnostics
                   </h4>
 
                   {analysis ? (
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-50 border border-emerald-100 text-emerald-650 dark:bg-emerald-950/40 dark:border-emerald-900/40 dark:text-emerald-400">
-                          Diagnostics Verified
-                        </span>
-                        <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-blue-50 border border-blue-100 text-blue-600 dark:bg-blue-950/40 dark:border-blue-900/40 dark:text-blue-400">
-                          Model: Gemini-Pro-Vision
-                        </span>
-                      </div>
-
-                      <p className="text-xs text-slate-650 dark:text-slate-350 leading-relaxed bg-slate-50 dark:bg-slate-950/20 p-4 rounded-xl border border-slate-100 dark:border-slate-900">
-                        <strong>AI Summary:</strong> {analysis.summaryReport}
-                      </p>
-
-                      <div className="grid grid-cols-2 gap-3 text-[10px]">
-                        <div className="p-3 bg-slate-50 dark:bg-slate-950/30 rounded-xl border border-slate-100 dark:border-slate-900 space-y-1">
-                          <span className="text-[9px] text-slate-400 block font-bold">Diagnosed Category</span>
-                          <span className="font-extrabold text-slate-800 dark:text-slate-200 block">{analysis.suggestedCategory}</span>
+                    <div className="space-y-4">
+                      {/* Grid Properties */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-[10px] font-semibold">
+                        <div className="p-3 bg-slate-50 dark:bg-slate-950/30 rounded-xl border border-slate-150 dark:border-slate-900 space-y-1">
+                          <span className="text-[9px] text-slate-500 block font-bold">Detected Category</span>
+                          <span className="font-extrabold text-slate-800 dark:text-slate-200 block text-xs">{incident?.category}</span>
                         </div>
-                        <div className="p-3 bg-slate-50 dark:bg-slate-955/30 rounded-xl border border-slate-100 dark:border-slate-900 space-y-1">
-                          <span className="text-[9px] text-slate-400 block font-bold">AI Recommended Priority</span>
-                          <span className="font-extrabold text-slate-800 dark:text-slate-200 block">{analysis.calculatedPriority || 'P2'}</span>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-950/30 rounded-xl border border-slate-150 dark:border-slate-900 space-y-1">
+                          <span className="text-[9px] text-slate-500 block font-bold">Suggested Department</span>
+                          <span className="font-extrabold text-slate-800 dark:text-slate-200 block text-xs">{incident?.assignedDepartment || 'Public Works'}</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-950/30 rounded-xl border border-slate-150 dark:border-slate-900 space-y-1">
+                          <span className="text-[9px] text-slate-500 block font-bold">Confidence Score</span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="font-extrabold text-slate-800 dark:text-slate-200 text-xs">{Math.round((analysis.confidence || 0.94) * 100)}%</span>
+                            <div className="h-1.5 w-16 bg-slate-200 dark:bg-slate-850 rounded-full overflow-hidden shrink-0">
+                              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.round((analysis.confidence || 0.94) * 100)}%` }} />
+                            </div>
+                          </div>
                         </div>
                       </div>
+
+                      {/* Explanation */}
+                      <div className="p-4 bg-slate-50 dark:bg-slate-950/20 border border-slate-150 dark:border-slate-900 rounded-xl space-y-1 text-xs">
+                        <span className="text-[9px] text-slate-450 block font-bold uppercase tracking-wider">AI Explanation</span>
+                        <p className="text-slate-655 dark:text-slate-350 leading-relaxed italic">"{analysis.summary}"</p>
+                      </div>
+
+                      {/* Observed damages chips */}
+                      {analysis.observedDamages && analysis.observedDamages.length > 0 && (
+                        <div className="space-y-1.5 text-xs">
+                          <span className="text-[9px] text-slate-450 block font-bold uppercase tracking-wider">Affected Infrastructure</span>
+                          <div className="flex flex-wrap gap-1.5 pt-0.5">
+                            {analysis.observedDamages.map((dmg, idx) => (
+                              <span key={idx} className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 text-[10px] font-bold">
+                                {dmg}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Risk Assessment details */}
+                      {risk && (
+                        <div className="p-4 rounded-xl border border-rose-500/10 bg-rose-500/5 space-y-3.5 text-xs">
+                          <span className="text-[9px] text-rose-400 block font-bold uppercase tracking-wider">Risk & Threats Card</span>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div>
+                              <span className="text-[8px] text-slate-500 block font-bold">Threat Level</span>
+                              <span className="font-extrabold text-rose-450 block text-xs mt-0.5">{risk.threatLevel || 'MEDIUM'}</span>
+                            </div>
+                            <div>
+                              <span className="text-[8px] text-slate-505 block font-bold">Urgency Code</span>
+                              <span className="font-extrabold text-rose-450 block text-xs mt-0.5">{risk.urgency || 'ROUTINE'}</span>
+                            </div>
+                            <div>
+                              <span className="text-[8px] text-slate-505 block font-bold">Overall Risk Score</span>
+                              <span className="font-extrabold text-rose-450 block text-xs mt-0.5">{risk.overallRiskScore || 0}/100</span>
+                            </div>
+                          </div>
+                          <div className="space-y-1 pt-1 border-t border-rose-500/10">
+                            <span className="text-[8px] text-slate-500 block font-bold">Risk Reasoning</span>
+                            <p className="text-[10.5px] text-slate-355 leading-relaxed">{risk.reasoning}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <p className="text-xs text-slate-500 py-4 text-center">AI Vision diagnostic report is currently pending generation.</p>
@@ -500,11 +743,11 @@ export default function ReportDetails() {
                 {/* Lifecycle Predictions */}
                 {predictions && (
                   <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-855 shadow-sm space-y-4">
-                    <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2 flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-slate-505 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2 flex items-center gap-1.5">
                       <TrendingUp className="text-emerald-500" size={14} />
                       Lifecycle AI Predictions
                     </h4>
-                    <div className="grid grid-cols-2 gap-3 text-[10px]">
+                    <div className="grid grid-cols-2 gap-3 text-[10px] font-semibold">
                       <div className="p-2.5 bg-slate-50 dark:bg-slate-955/40 rounded-xl border border-slate-150 dark:border-slate-850">
                         <span className="text-[9px] text-slate-400 block font-bold">Estimated Cost</span>
                         <span className="font-extrabold text-slate-800 dark:text-slate-200 block mt-0.5">${predictions.repairCost || 'N/A'}</span>
@@ -528,22 +771,19 @@ export default function ReportDetails() {
                 {/* Duplicate Check */}
                 {duplicateCheck && (
                   <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-855 shadow-sm space-y-4">
-                    <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2 flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-slate-505 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2 flex items-center gap-1.5">
                       <AlertTriangle className="text-emerald-500" size={14} />
                       Duplicate Detection Agent
                     </h4>
                     <div className="space-y-3.5">
-                      <div className="flex justify-between items-center text-[10px]">
-                        <span className="text-slate-500 font-bold">Duplicate Match Score</span>
+                      <div className="flex justify-between items-center text-[10px] font-semibold">
+                        <span className="text-slate-500 block font-bold">Duplicate Match Score</span>
                         <span className="font-black text-rose-500">{duplicateCheck.duplicateScore || 0}%</span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-855 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-rose-500 rounded-full"
-                          style={{ width: `${duplicateCheck.duplicateScore || 0}%` }}
-                        />
+                      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-955 border border-slate-200 dark:border-slate-855 rounded-full overflow-hidden">
+                        <div className="h-full bg-rose-500 rounded-full" style={{ width: `${duplicateCheck.duplicateScore || 0}%` }} />
                       </div>
-                      <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed bg-slate-50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-150 dark:border-slate-855">
+                      <p className="text-[10px] text-slate-650 dark:text-slate-400 leading-relaxed bg-slate-50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-150 dark:border-slate-855">
                         <strong>Reasoning:</strong> {duplicateCheck.reasoning}
                       </p>
                     </div>
@@ -564,7 +804,7 @@ export default function ReportDetails() {
                     <div className="relative">
                       <div className="absolute -left-[31px] top-0.5 w-4 h-4 rounded-full bg-emerald-500 border-4 border-white dark:border-slate-955 shadow shadow-emerald-500/20" />
                       <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Citizen Reported</div>
-                      <div className="text-[9px] text-slate-500">Incident successfully submitted on {new Date(incident.createdAt).toLocaleDateString()}</div>
+                      <div className="text-[9px] text-slate-505">Incident successfully submitted on {new Date(incident.createdAt).toLocaleDateString()}</div>
                     </div>
 
                     <div className="relative">
@@ -572,7 +812,7 @@ export default function ReportDetails() {
                         analysis ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-slate-200 dark:bg-slate-800'
                       }`} />
                       <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">AI Analyzed</div>
-                      <div className="text-[9px] text-slate-500">
+                      <div className="text-[9px] text-slate-505">
                         {analysis ? 'Gemini tag analysis completed successfully' : 'Pending AI structural analysis'}
                       </div>
                     </div>
@@ -582,7 +822,7 @@ export default function ReportDetails() {
                         risk ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-slate-200 dark:bg-slate-800'
                       }`} />
                       <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Risk Calculated</div>
-                      <div className="text-[9px] text-slate-500">
+                      <div className="text-[9px] text-slate-505">
                         {risk ? `Threat Level calculated: ${risk.threatLevel}` : 'Pending SLA priority score calculations'}
                       </div>
                     </div>
@@ -592,7 +832,7 @@ export default function ReportDetails() {
                         assignment ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-slate-200 dark:bg-slate-800'
                       }`} />
                       <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Assigned</div>
-                      <div className="text-[9px] text-slate-500">
+                      <div className="text-[9px] text-slate-505">
                         {assignment ? `Dispatched to officer ${assignment.officerName}` : 'Awaiting admin dispatch routing'}
                       </div>
                     </div>
@@ -618,7 +858,7 @@ export default function ReportDetails() {
                           : 'bg-slate-200 dark:bg-slate-800'
                       }`} />
                       <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Work Started</div>
-                      <div className="text-[9px] text-slate-500">
+                      <div className="text-[9px] text-slate-505">
                         {assignment && ['IN_PROGRESS', 'COMPLETED', 'CLOSED'].includes(assignment.status?.toUpperCase()) 
                           ? 'Maintenance crews actively patching/resolving' 
                           : 'Pending responder arrival on location'}
@@ -632,7 +872,7 @@ export default function ReportDetails() {
                           : 'bg-slate-200 dark:bg-slate-800'
                       }`} />
                       <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Resolved</div>
-                      <div className="text-[9px] text-slate-500">
+                      <div className="text-[9px] text-slate-505">
                         {['RESOLVED', 'CLOSED'].includes(incident.status?.toUpperCase()) 
                           ? 'Field repairs successfully completed' 
                           : 'Pending repair completion uploads'}
@@ -646,7 +886,7 @@ export default function ReportDetails() {
                           : 'bg-slate-200 dark:bg-slate-800'
                       }`} />
                       <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">Citizen Confirmed & Closed</div>
-                      <div className="text-[9px] text-slate-500">
+                      <div className="text-[9px] text-slate-505">
                         {incident.closedAt 
                           ? `Citizen verified resolution. Ticket archived.` 
                           : 'Awaiting citizen closure confirmation'}
@@ -658,7 +898,7 @@ export default function ReportDetails() {
                 {/* AI Agent Execution Activity Logs */}
                 {aiTimeline.length > 0 && (
                   <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-855 shadow-sm space-y-4">
-                    <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2 flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-slate-505 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2 flex items-center gap-1.5">
                       <Activity className="text-emerald-500" size={14} />
                       AI Agent Activity Logs
                     </h4>
@@ -679,16 +919,150 @@ export default function ReportDetails() {
               </>
             )}
 
+            {/* Evidence tab content */}
+            {activeTab === 'evidence' && (
+              <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-855 shadow-sm space-y-4 animate-fade-in">
+                <h4 className="text-xs font-bold text-slate-505 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2">
+                  Incident Evidence Gallery
+                </h4>
+                
+                {incident.imageUrl ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+                    <div className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 aspect-video flex items-center justify-center cursor-zoom-in" onClick={() => setZoomedImage(incident.imageUrl)}>
+                      <img 
+                        src={incident.imageUrl} 
+                        alt="Evidence Thumbnail" 
+                        className="max-w-full max-h-full object-contain group-hover:scale-[1.02] transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-[10px] text-white font-extrabold uppercase bg-slate-950/80 px-2.5 py-1 rounded-lg">Click to Zoom</span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4 text-xs font-semibold">
+                      <div className="space-y-1.5">
+                        <span className="text-[9px] text-slate-400 uppercase tracking-wider block font-bold">Image Details</span>
+                        <div className="space-y-1 text-slate-700 dark:text-slate-300">
+                          <p>File reference: <span className="font-mono text-[10px]">{incident.imagePath || 'incident_evidence_upload.png'}</span></p>
+                          <p>Uploaded: <span>{new Date(incident.createdAt).toLocaleString()}</span></p>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-2">
+                        <a 
+                          href={incident.imageUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          download={`CivicLens-Evidence-${incident.id?.substring(0, 8)}.png`}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-955 font-extrabold rounded-xl text-xs transition-colors shadow-sm"
+                        >
+                          Download Full Image
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 py-4 text-center">No image evidence uploaded for this incident.</p>
+                )}
+              </Card>
+            )}
+
+            {activeTab === 'comments' && (
+              <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-855 shadow-sm space-y-5 animate-fade-in">
+                <h4 className="text-xs font-bold text-slate-505 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2 flex items-center gap-1.5">
+                  <MessageSquare className="text-emerald-500" size={15} />
+                  Community Discussion Board ({comments.length})
+                </h4>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newCommentText}
+                    onChange={(e) => setNewCommentText(e.target.value)}
+                    placeholder="Write a public comment..."
+                    className="flex-1 bg-slate-50 dark:bg-slate-955/40 border border-slate-205 dark:border-slate-855 rounded-xl px-4 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-450 focus:outline-none focus:border-emerald-500/50"
+                  />
+                  <Button
+                    onClick={handlePostComment}
+                    disabled={submittingComment || !newCommentText.trim()}
+                    className="p-3 bg-emerald-500 hover:bg-emerald-400 text-slate-955 font-bold rounded-xl"
+                  >
+                    {submittingComment ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Send size={14} />
+                    )}
+                  </Button>
+                </div>
+
+                <CommentsList 
+                  comments={comments} 
+                  incidentId={id}
+                  incident={incident}
+                  assignment={assignment}
+                  onCommentAdded={(newComment) => {
+                    setComments(prev => [...prev, newComment]);
+                  }}
+                  onCommentLiked={async (commentId) => {
+                    await likeComment(commentId);
+                    setComments(prev => prev.map(c => {
+                      if (c.id === commentId) {
+                        const liked = c.likedBy || [];
+                        const hasLiked = liked.includes(currentUser?.userId);
+                        const newLiked = hasLiked 
+                          ? liked.filter(uid => uid !== currentUser?.userId)
+                          : [...liked, currentUser?.userId];
+                        return { ...c, likedBy: newLiked, likesCount: newLiked.length };
+                      }
+                      return c;
+                    }));
+                  }}
+                />
+              </Card>
+            )}
+
+            {/* History tab content (dynamic activities list) */}
+            {activeTab === 'history' && (
+              <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-855 shadow-sm space-y-4 animate-fade-in">
+                <h4 className="text-xs font-bold text-slate-505 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2">
+                  Parameters Override Logs & Audits
+                </h4>
+
+                {getHistoryTimeline().length === 0 ? (
+                  <p className="text-slate-500 text-xs py-4 text-center font-semibold">No activity has been recorded yet.</p>
+                ) : (
+                  <div className="space-y-4 pt-2">
+                    {getHistoryTimeline().map((step, idx) => (
+                      <div key={idx} className="flex gap-3 items-start text-xs font-semibold">
+                        <div className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 flex items-center justify-center shrink-0">
+                          {renderHistoryIcon(step.icon)}
+                        </div>
+                        <div className="space-y-0.5 flex-1 min-w-0">
+                          <div className="flex justify-between items-center gap-2">
+                            <span className="font-extrabold text-slate-800 dark:text-slate-200 block">{step.action}</span>
+                            <span className="text-[8px] text-slate-400 font-mono">{new Date(step.timestamp).toLocaleString()}</span>
+                          </div>
+                          <span className="block text-[9px] text-emerald-500 font-bold uppercase tracking-wide leading-none pt-0.5">Actor: {step.actor}</span>
+                          {step.note && <p className="text-[10px] text-slate-505 dark:text-slate-400 mt-1 leading-normal">{step.note}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            )}
+
+            {/* Resolution tab content */}
             {activeTab === 'resolution' && (
               <div className="space-y-6 animate-fade-in">
-                {/* Citizen Resolution Verification */}
+                {/* Citizen Resolution Verification Banner */}
                 {incident.status === 'RESOLVED' && (currentUser?.email === incident.reportedBy || currentUser?.role?.toUpperCase() === 'CITIZEN') && (
                   <Card className="p-6 bg-emerald-50/50 dark:bg-emerald-955/15 border-emerald-250 dark:border-emerald-900/50 shadow-sm space-y-4">
                     <h4 className="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
                       <CheckCircle size={16} />
                       Citizen Resolution Verification
                     </h4>
-                    <p className="text-xs text-slate-600 dark:text-slate-355">
+                    <p className="text-xs text-slate-650 dark:text-slate-355 leading-normal">
                       Municipal crews have marked this issue as resolved. Please confirm if the repairs are completed, or reject to reopen the ticket.
                     </p>
                     <input
@@ -696,7 +1070,7 @@ export default function ReportDetails() {
                       placeholder="Feedback comments (required for rejects)..."
                       value={verificationFeedback}
                       onChange={(e) => setVerificationFeedback(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-955/40 border border-slate-200 dark:border-slate-855 rounded-xl px-4 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-emerald-500/50"
+                      className="w-full bg-white dark:bg-slate-955/40 border border-slate-200 dark:border-slate-855 rounded-xl px-4 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-450 focus:outline-none focus:border-emerald-500/50"
                     />
                     <div className="flex gap-2">
                       <Button
@@ -724,8 +1098,8 @@ export default function ReportDetails() {
                     </h4>
                     <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
                       ['RESOLVED', 'CLOSED'].includes(incident.status?.toUpperCase()) 
-                        ? 'bg-emerald-500/10 text-emerald-505 border border-emerald-500/20'
-                        : 'bg-amber-500/10 text-amber-550 border border-amber-500/20 animate-pulse'
+                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse'
                     }`}>
                       {['RESOLVED', 'CLOSED'].includes(incident.status?.toUpperCase()) ? 'Resolved Status' : 'Pending Resolution'}
                     </span>
@@ -734,7 +1108,7 @@ export default function ReportDetails() {
                   {assignment && assignment.status === 'COMPLETED' && incident.status !== 'CLOSED' && (
                     <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-4 animate-scale-in">
                       <div className="flex items-start gap-3">
-                        <CheckCircle className="text-emerald-505 mt-0.5" size={16} />
+                        <CheckCircle className="text-emerald-500 mt-0.5" size={16} />
                         <div className="space-y-1">
                           <span className="block text-xs font-bold text-slate-800 dark:text-slate-200">Field Resolution Awaiting Verification</span>
                           <p className="text-[10px] text-slate-505 leading-normal">
@@ -745,8 +1119,9 @@ export default function ReportDetails() {
 
                       <div className="flex gap-2 justify-end">
                         <Button 
-                          onClick={handleVerifyClosure}
-                          loading={submittingVerify}
+                          onClick={() => handleVerifyResolution(true)}
+                          disabled={verifying}
+                          isLoading={verifying}
                           className="bg-emerald-500 hover:bg-emerald-450 text-slate-950 font-black text-[10px] py-1 px-3 shadow"
                         >
                           Verify Resolution
@@ -756,53 +1131,74 @@ export default function ReportDetails() {
                   )}
 
                   {['RESOLVED', 'CLOSED'].includes(incident?.status?.toUpperCase()) ? (
-                    <div id="print-certificate" className="p-8 bg-white dark:bg-slate-955 border-2 border-emerald-500 rounded-2xl shadow-xl space-y-6 max-w-2xl mx-auto relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-                      <div className="flex justify-between items-start border-b border-slate-200 dark:border-slate-800 pb-4">
+                    <div className="space-y-6">
+                      {/* Before / After comparative view */}
+                      <div className="space-y-3">
+                        <span className="text-[9px] text-slate-400 uppercase tracking-wider block font-bold">Evidence Comparison (Before / After)</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <span className="text-[8px] text-slate-500 uppercase tracking-wider block font-bold text-center">Before (Reported Incident)</span>
+                            <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 aspect-video flex items-center justify-center cursor-zoom-in" onClick={() => setZoomedImage(incident.imageUrl)}>
+                              <img src={incident.imageUrl} alt="Before repairs" className="max-w-full max-h-full object-contain" />
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <span className="text-[8px] text-slate-500 uppercase tracking-wider block font-bold text-center">After (Completed Resolution)</span>
+                            <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 aspect-video flex items-center justify-center cursor-zoom-in" onClick={() => setZoomedImage(assignment?.completionImageUrl || incident.imageUrl)}>
+                              {assignment?.completionImageUrl ? (
+                                <img src={assignment.completionImageUrl} alt="After repairs" className="max-w-full max-h-full object-contain" />
+                              ) : (
+                                <div className="text-center p-6 text-slate-500 flex flex-col items-center justify-center w-full h-full text-[10px] font-bold">
+                                  <ImageIcon size={20} className="mb-1 text-slate-600" />
+                                  <span>After photo pending upload from responding officer</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Resolution details */}
+                      <div className="grid grid-cols-2 gap-4 text-xs font-semibold pt-2 border-t border-slate-100 dark:border-slate-855">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="p-1 bg-emerald-500 text-slate-955 rounded-md"><CheckCircle size={14} /></span>
-                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Resolution Certificate</h3>
-                          </div>
-                          <p className="text-[8px] text-slate-450">CivicLens Smart City Operations Registry</p>
+                          <span className="text-[8px] text-slate-500 block font-bold uppercase">Completed By</span>
+                          <span className="text-[10px] font-extrabold text-slate-800 dark:text-slate-200">{assignment?.officerName || 'Municipal Maintenance Division'}</span>
                         </div>
-                        <div className="text-right font-mono text-[8px] text-slate-455 space-y-0.5">
-                          <p>CERTIFICATE ID: CL-RES-{incident.id?.substring(0, 8).toUpperCase()}</p>
-                          <p>CLOSED ON: {incident.closedAt ? new Date(incident.closedAt).toLocaleDateString() : new Date().toLocaleDateString()}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="space-y-1 text-center py-2 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-855">
-                          <span className="text-[12px] font-black text-slate-800 dark:text-white leading-normal">{incident.title}</span>
-                          <p className="text-[10px] text-slate-550 font-bold">Location: {incident.location?.address || 'City Center'}</p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 text-xs pt-2">
-                          <div className="space-y-1">
-                            <span className="text-[8px] text-slate-450 block font-bold">Managing Division</span>
-                            <span className="text-[10px] font-extrabold text-slate-700 dark:text-slate-355">{incident.assignedDepartment || 'Public Works Department'}</span>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-[8px] text-slate-455 block font-bold">Lead Resolving Agent</span>
-                            <span className="text-[10px] font-extrabold text-slate-700 dark:text-slate-355">{incident.resolvingOfficerName || 'Assigned Division Crews'}</span>
-                          </div>
-                        </div>
-
-                        <div className="pt-2.5 border-t border-slate-150 dark:border-slate-855 space-y-1">
-                          <span className="text-[8px] text-slate-450 block font-bold">Resolution Summary Report</span>
-                          <p className="text-[10px] text-slate-655 dark:text-slate-350 leading-relaxed italic bg-emerald-50/20 dark:bg-emerald-955/5 p-3 rounded-lg border border-emerald-500/10">
-                            "{incident.resolutionReport || 'The maintenance crews successfully completed repair works on site. Road structures have been patched and aligned to safety standards.'}"
-                          </p>
+                        <div className="space-y-1">
+                          <span className="text-[8px] text-slate-500 block font-bold uppercase">Completion Date</span>
+                          <span className="text-[10px] font-extrabold text-slate-800 dark:text-slate-200">
+                            {assignment?.completedAt ? new Date(assignment.completedAt).toLocaleDateString() : new Date().toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
 
-                      <div className="flex justify-between items-center pt-6 border-t border-slate-200 dark:border-slate-800 text-[9px] text-slate-455 font-semibold font-mono">
-                        <div className="flex items-center gap-1">
-                          <CheckCircle size={10} className="text-emerald-500" />
-                          <span>Citizen Verified via OTP Signature</span>
-                        </div>
-                        <span className="text-slate-455 font-bold">Secured by Firebase & Gemini AI Trust Index</span>
+                      {/* Resolution Notes */}
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-855 space-y-1.5">
+                        <span className="text-[8px] text-slate-500 block font-bold uppercase">Resolution Notes & Summary</span>
+                        <p className="text-[10px] text-slate-655 dark:text-slate-350 leading-relaxed italic bg-emerald-500/5 p-3 rounded-lg border border-emerald-500/10">
+                          "{assignment?.completionReport || 'The maintenance crews successfully completed repair works on site. Road structures have been patched and aligned to safety standards.'}"
+                        </p>
+                      </div>
+
+                      {/* Dynamic Certificate Download */}
+                      <div className="pt-4 border-t border-slate-100 dark:border-slate-855 flex justify-end">
+                        <Button
+                          onClick={handleDownloadPdf}
+                          disabled={generatingPdf}
+                          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs py-2 shadow-sm flex items-center justify-center gap-1.5"
+                        >
+                          {generatingPdf ? (
+                            <>
+                              <Loader2 size={13} className="animate-spin" />
+                              Generating PDF...
+                            </>
+                          ) : (
+                            <>
+                              <Printer size={13} />
+                              Download Resolution Certificate
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </div>
                   ) : (
@@ -814,86 +1210,6 @@ export default function ReportDetails() {
               </div>
             )}
 
-            {activeTab === 'history' && (
-              <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-855 shadow-sm space-y-4 animate-fade-in">
-                <h4 className="text-xs font-bold text-slate-500 dark:text-slate-450 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2">
-                  Parameters Override Logs
-                </h4>
-
-                {auditLogs.length === 0 ? (
-                  <p className="text-slate-500 text-xs py-4 text-center font-semibold">No modifications logged in audit trail.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {auditLogs.map((step) => (
-                      <div key={step.id} className="p-3 bg-slate-50 dark:bg-slate-950/20 rounded-xl border border-slate-200 dark:border-slate-855 flex items-start justify-between gap-3 text-[10px]">
-                        <div className="space-y-1">
-                          <span className="block font-bold text-slate-700 dark:text-slate-350">{step.actorName} ({step.actorRole})</span>
-                          <p className="text-slate-650 dark:text-slate-400 leading-normal">{step.actionDescription}</p>
-                        </div>
-                        <span className="text-[8px] text-slate-500 font-mono block">
-                          {new Date(step.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            )}
-
-            {activeTab === 'comments' && (
-              <Card className="p-6 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-855 shadow-sm space-y-5 animate-fade-in">
-                <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-855 pb-2 flex items-center gap-1.5">
-                  <MessageSquare className="text-emerald-500" size={15} />
-                  Community Discussion Board ({comments.length})
-                </h4>
-
-                {/* Submit Comment Input form */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newCommentText}
-                    onChange={(e) => setNewCommentText(e.target.value)}
-                    placeholder="Write a public comment..."
-                    className="flex-1 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-855 rounded-xl px-4 py-2.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-emerald-500/50"
-                  />
-                  <Button
-                    onClick={handlePostComment}
-                    disabled={submittingComment || !newCommentText.trim()}
-                    className="p-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl"
-                  >
-                    {submittingComment ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Send size={14} />
-                    )}
-                  </Button>
-                </div>
-
-                {/* Comments recursive list */}
-                <CommentsList 
-                  comments={comments} 
-                  incidentId={id}
-                  onCommentAdded={(newComment) => {
-                    setComments(prev => [...prev, newComment]);
-                  }}
-                  onCommentLiked={async (commentId) => {
-                    await likeComment(commentId);
-                    setComments(prev => prev.map(c => {
-                      if (c.id === commentId) {
-                        const liked = c.likedBy || [];
-                        const hasLiked = liked.includes(currentUser?.userId);
-                        const newLiked = hasLiked 
-                          ? liked.filter(uid => uid !== currentUser?.userId)
-                          : [...liked, currentUser?.userId];
-                        return { ...c, likedBy: newLiked, likesCount: newLiked.length };
-                      }
-                      return c;
-                    }));
-                  }}
-                />
-              </Card>
-            )}
-
           </div>
         </div>
 
@@ -901,7 +1217,7 @@ export default function ReportDetails() {
         <div className="lg:col-span-4 space-y-6">
           
           {/* Metadata Sidebar Card */}
-          <Card className="p-5 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <Card className="p-5 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 shadow-sm space-y-4 font-semibold">
             <h4 className="text-xs font-black text-slate-850 dark:text-slate-350 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">
               Incident Metadata
             </h4>
@@ -917,7 +1233,7 @@ export default function ReportDetails() {
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 dark:text-slate-400 block font-bold">Priority Code</span>
                 <span className={`px-2 py-0.5 rounded text-[9px] font-black border ${
-                  incident.priority === 'P1' ? 'bg-rose-50 text-rose-600 border-rose-250 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/60' : 'bg-slate-50 text-slate-650 border-slate-200 dark:bg-slate-950/40 dark:text-slate-400 dark:border-slate-855'
+                  incident.priority === 'P1' ? 'bg-rose-50 text-rose-600 border-rose-250 dark:bg-rose-955/30 dark:text-rose-450 dark:border-rose-900/60' : 'bg-slate-50 text-slate-650 border-slate-200 dark:bg-slate-950/40 dark:text-slate-400 dark:border-slate-855'
                 }`}>
                   {incident.priority || 'P2'}
                 </span>
@@ -949,25 +1265,35 @@ export default function ReportDetails() {
 
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
               <Button
-                onClick={() => window.print()}
-                className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs py-2 shadow-sm flex items-center justify-center gap-1"
+                onClick={handleDownloadPdf}
+                disabled={generatingPdf || !['RESOLVED', 'CLOSED'].includes(incident.status?.toUpperCase())}
+                className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs py-2 shadow-sm flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Printer size={13} />
-                Download PDF Certificate
+                {generatingPdf ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin animate-spin-slow" />
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <Printer size={13} />
+                    Download PDF Certificate
+                  </>
+                )}
               </Button>
             </div>
           </Card>
 
-          {/* Admin Override controls (if user is Admin) */}
+          {/* Admin Override controls */}
           {(currentUser?.role === 'ADMIN' || currentUser?.role?.toUpperCase() === 'ADMIN') && (
             <Card className="p-5 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
               <h4 className="text-xs font-black text-slate-855 dark:text-slate-355 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">
                 Operational Overrides
               </h4>
               
-              <div className="space-y-4 text-xs">
+              <div className="space-y-4 text-xs font-semibold">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Set Manual Category</label>
+                  <label className="text-[10px] font-bold text-slate-505 dark:text-slate-400 uppercase tracking-wider block">Set Manual Category</label>
                   <select
                     value={overrideCategory}
                     onChange={(e) => setOverrideCategory(e.target.value)}
@@ -983,7 +1309,7 @@ export default function ReportDetails() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Set Manual Priority</label>
+                  <label className="text-[10px] font-bold text-slate-505 dark:text-slate-400 uppercase tracking-wider block">Set Manual Priority</label>
                   <select
                     value={overridePriority}
                     onChange={(e) => setOverridePriority(e.target.value)}
@@ -996,7 +1322,7 @@ export default function ReportDetails() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Modify Incident Status</label>
+                  <label className="text-[10px] font-bold text-slate-505 dark:text-slate-400 uppercase tracking-wider block">Modify Incident Status</label>
                   <select
                     value={overrideStatus}
                     onChange={(e) => setOverrideStatus(e.target.value)}
@@ -1024,46 +1350,136 @@ export default function ReportDetails() {
 
       </div>
 
-      {/* Print-optimized resolution certificate (hidden on screen, visible during printing) */}
-      <div id="print-certificate" className="hidden print:block p-8 space-y-6 text-slate-900 bg-white min-h-screen">
-        <div className="flex justify-between items-center border-b pb-4">
-          <div>
-            <h1 className="text-xl font-black uppercase tracking-wider text-slate-800">CivicLens Municipal Resolution Report</h1>
-            <span className="text-xs text-slate-550 font-mono">Document reference: CERT-{id.substring(0,8).toUpperCase()}</span>
+      {/* Off-screen container for PDF generation */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', overflow: 'hidden' }}>
+        <div 
+          ref={certificateRef}
+          className="p-8 bg-[#070b19] border-2 border-emerald-500 rounded-2xl text-slate-200 space-y-6"
+          style={{ width: '600px', backgroundColor: '#070b19' }}
+        >
+          <div className="flex justify-between items-start border-b border-slate-800 pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <Activity size={18} className="text-emerald-400" />
+                <span className="text-sm font-black uppercase tracking-wider text-white">CivicLens AI</span>
+              </div>
+              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Smart City Operations Registry</p>
+            </div>
+            <div className="text-right text-[9px] text-slate-400 font-mono space-y-0.5">
+              <p className="text-emerald-400 font-bold">CERTIFICATE ID: CL-RES-{incident?.id?.substring(0, 8).toUpperCase()}</p>
+              <p>ISSUED: {new Date().toLocaleDateString()}</p>
+            </div>
           </div>
-          <div className="w-12 h-12 border border-slate-200 flex items-center justify-center font-bold text-xs">
-            MUNICIPAL SEAL
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4 text-xs">
-          <div>
-            <strong>Complaint ID:</strong> {id}<br/>
-            <strong>Tracking ID:</strong> {incident?.trackingId || 'N/A'}<br/>
-            <strong>Category:</strong> {incident?.category}<br/>
-            <strong>Reported On:</strong> {incident ? new Date(incident.createdAt).toLocaleDateString() : 'N/A'}<br/>
-          </div>
-          <div>
-            <strong>Department:</strong> {assignment?.department || 'Public Works'}<br/>
-            <strong>Assigned Officer:</strong> {assignment?.officerName || 'N/A'}<br/>
-            <strong>Completion Date:</strong> {assignment?.completedAt ? new Date(assignment.completedAt).toLocaleDateString() : new Date().toLocaleDateString()}<br/>
-          </div>
-        </div>
 
-        <div className="border p-4 rounded-xl space-y-2 text-xs">
-          <h3 className="text-xs font-black uppercase">Resolution Details</h3>
-          <p className="leading-relaxed text-slate-700">{assignment?.completionReport || 'Standard maintenance successfully executed and verified.'}</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-6 pt-12 text-center text-[10px] text-slate-400">
-          <div className="border-t pt-2">
-            MUNICIPAL CLERK SIGNATURE
+          <div className="text-center space-y-1.5 py-4">
+            <h3 className="text-base font-black text-white uppercase tracking-widest">Resolution Certificate</h3>
+            <p className="text-[10px] text-slate-400 max-w-md mx-auto leading-relaxed">
+              This official document certifies that the following citizen reported infrastructure issue has been resolved by municipal service crews.
+            </p>
           </div>
-          <div className="border-t pt-2">
-            DIGITAL VERIFICATION STAMP
+
+          <div className="grid grid-cols-2 gap-4 text-xs bg-slate-900/50 p-4 rounded-xl border border-slate-850">
+            <div className="space-y-2">
+              <div>
+                <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Incident Title</span>
+                <span className="font-bold text-white text-[11px] block">{incident?.title}</span>
+              </div>
+              <div>
+                <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Physical Location</span>
+                <span className="font-bold text-slate-300 block">{incident?.location?.address || 'City Center'}</span>
+              </div>
+              <div>
+                <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Reported By</span>
+                <span className="font-bold text-slate-300 block">{incident?.anonymous ? 'Anonymous Citizen' : (incident?.reportedBy || 'Citizen')}</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Category</span>
+                  <span className="font-bold text-slate-300 block">{incident?.category}</span>
+                </div>
+                <div>
+                  <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Priority</span>
+                  <span className="font-bold text-slate-300 block">{incident?.priority || 'P2'}</span>
+                </div>
+              </div>
+              <div>
+                <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Lead Department</span>
+                <span className="font-bold text-slate-300 block">{incident?.assignedDepartment || 'Public Works Department'}</span>
+              </div>
+              <div>
+                <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Assigned Officer</span>
+                <span className="font-bold text-slate-300 block">{incident?.resolvingOfficerName || 'Municipal Field Team'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3.5 pt-2">
+            <div className="p-3 bg-slate-900/30 rounded-lg border border-slate-850">
+              <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">AI Analysis Summary</span>
+              <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                {analysis?.summary || 'Gemini Vision AI classified and analyzed structural integrity with verified category and location metrics.'}
+              </p>
+            </div>
+            <div className="p-3 bg-emerald-500/5 rounded-lg border border-emerald-500/10">
+              <span className="text-[8px] text-emerald-400 font-bold uppercase tracking-wider block">Field Resolution Summary</span>
+              <p className="text-[10px] text-slate-300 mt-1 leading-relaxed italic">
+                "{incident?.resolutionReport || 'Standard maintenance successfully executed. Infrastructure elements have been patched, cleaned, and approved for safe public reuse.'}"
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-850 text-center items-center">
+            <div className="space-y-1">
+              <div className="h-8 border-b border-slate-800 flex items-center justify-center">
+                <span className="text-[10px] text-slate-500 font-mono italic">Verified Digital Sign</span>
+              </div>
+              <span className="text-[7px] text-slate-500 uppercase tracking-widest block font-bold">Authorized Officer</span>
+            </div>
+            <div className="flex flex-col items-center justify-center">
+              <div className="p-1 bg-white rounded-md">
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="black">
+                  <rect width="8" height="8" />
+                  <rect x="28" width="8" height="8" />
+                  <rect y="28" width="8" height="8" />
+                  <rect x="12" y="12" width="12" height="12" />
+                </svg>
+              </div>
+              <span className="text-[6px] text-slate-500 font-mono mt-1">SCAN TO VERIFY</span>
+            </div>
+            <div className="space-y-1">
+              <div className="h-8 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full border border-dashed border-emerald-500/30 flex items-center justify-center text-[7px] text-emerald-400 font-mono leading-none text-center">
+                  OFFICIAL<br/>SEAL
+                </div>
+              </div>
+              <span className="text-[7px] text-slate-500 uppercase tracking-widest block font-bold">Digital Trust Stamp</span>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center text-[8px] text-slate-500 pt-4 border-t border-slate-850 font-mono">
+            <span>SYSTEM LOGS: VERIFIED BY GEMINI AI TRUST INDEX</span>
+            <span>Generated: {new Date().toLocaleString()}</span>
           </div>
         </div>
       </div>
+
+      {/* Zoom Image Modal */}
+      {zoomedImage && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 md:p-8 animate-fade-in" onClick={() => setZoomedImage(null)}>
+          <button 
+            type="button" 
+            className="absolute top-4 right-4 p-2 bg-slate-950/80 hover:bg-rose-600 text-slate-350 hover:text-white rounded-full transition-colors"
+            onClick={() => setZoomedImage(null)}
+          >
+            <XCircle size={24} />
+          </button>
+          <div className="max-w-4xl max-h-[85vh] overflow-hidden rounded-xl border border-slate-800 shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
+            <img src={zoomedImage} alt="Zoomed Evidence" className="max-w-full max-h-[85vh] object-contain" />
+          </div>
+        </div>
+      )}
 
     </div>
   );

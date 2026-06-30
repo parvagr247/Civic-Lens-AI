@@ -30,6 +30,12 @@ public class IncidentResponse {
     private String citizenReopenPhotoUrl;
     private Integer supportCount;
     private java.util.List<String> supportedBy;
+    private Boolean hidden;
+    private Boolean pinned;
+    private Boolean locked;
+    private Boolean escalated;
+    private Double spamScore;
+    private String moderator;
     private Long closedAt;
     private Long createdAt;
     private Long updatedAt;
@@ -57,6 +63,12 @@ public class IncidentResponse {
                 .citizenReopenPhotoUrl(incident.getCitizenReopenPhotoUrl())
                 .supportCount(incident.getSupportCount() != null ? incident.getSupportCount() : 0)
                 .supportedBy(incident.getSupportedBy() != null ? incident.getSupportedBy() : new java.util.ArrayList<>())
+                .hidden(incident.getHidden())
+                .pinned(incident.getPinned())
+                .locked(incident.getLocked())
+                .escalated(incident.getEscalated())
+                .spamScore(incident.getSpamScore())
+                .moderator(incident.getModerator())
                 .closedAt(incident.getClosedAt())
                 .createdAt(incident.getCreatedAt())
                 .updatedAt(incident.getUpdatedAt())

@@ -222,7 +222,7 @@ export default function OfficerDashboard() {
       </div>
 
       {/* Splits Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left Column: Worklist Assignments */}
         <div className="lg:col-span-7 space-y-5">

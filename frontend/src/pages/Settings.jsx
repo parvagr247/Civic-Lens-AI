@@ -3,6 +3,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../components/ui/ToastProvider';
 import { getCurrentUser, isAdmin } from '../services/authService';
+import { getProfile, updateProfile } from '../services/profileService';
 import { 
   User, Bell, Lock, Laptop, Shield, Globe, 
   HelpCircle, Eye, Cpu, CheckCircle2, AlertTriangle, 
@@ -85,6 +86,55 @@ export default function Settings() {
   const [adminTemp, setAdminTemp] = useState(0.2);
   const [firebasePath, setFirebasePath] = useState('classpath:firebase-service-account.json');
   const [logVerbosity, setLogVerbosity] = useState('INFO');
+
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!currentUser?.userId) return;
+      setLoadingProfile(true);
+      try {
+        const res = await getProfile(currentUser.userId);
+        if (res.success && res.data && res.data.profile) {
+          const p = res.data.profile;
+          setFullName(p.name || currentUser.name || '');
+          setProfileBio(p.bio || '');
+          setProfileCity(p.city || 'Portland');
+          setProfileState(p.state || 'Oregon');
+          setProfileCountry(p.country || 'United States');
+          setAvatarUrl(p.avatarUrl || 'https://api.dicebear.com/7.x/bottts/svg?seed=fallback');
+        }
+      } catch (err) {
+        console.warn("Failed to load profile settings", err);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    fetchProfileData();
+  }, [currentUser]);
+
+  const handleSaveProfileData = async () => {
+    setSavingProfile(true);
+    try {
+      const res = await updateProfile({
+        name: fullName,
+        bio: profileBio,
+        avatarUrl: avatarUrl,
+        city: profileCity,
+        state: profileState,
+        country: profileCountry
+      });
+      if (res.success) {
+        toast('Profile preferences saved successfully!', 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      toast('Failed to save profile changes.', 'error');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   // Save Settings handler
   const handleSave = (sectionName) => {
@@ -356,7 +406,8 @@ export default function Settings() {
 
               <div className="flex justify-end pt-2">
                 <Button 
-                  onClick={() => handleSave('profile')}
+                  onClick={handleSaveProfileData}
+                  isLoading={savingProfile}
                   className="bg-emerald-500 hover:bg-emerald-400 text-slate-955 text-xs px-6 py-2.5 font-bold shadow rounded-xl active:scale-[0.98]"
                 >
                   Save Profile Changes

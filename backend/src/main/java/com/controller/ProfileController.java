@@ -73,6 +73,9 @@ public class ProfileController {
                     .rank(100)
                     .reportsSubmitted(0)
                     .reportsResolved(0)
+                    .city("Portland")
+                    .state("Oregon")
+                    .country("United States")
                     .unlockedAchievements(List.of())
                     .savedIncidents(List.of())
                     .build();
@@ -138,6 +141,9 @@ public class ProfileController {
                     .rank(100)
                     .reportsSubmitted(0)
                     .reportsResolved(0)
+                    .city("Portland")
+                    .state("Oregon")
+                    .country("United States")
                     .unlockedAchievements(List.of())
                     .savedIncidents(List.of())
                     .build();
@@ -154,6 +160,15 @@ public class ProfileController {
         }
         if (request.containsKey("coverImageUrl")) {
             profile.setCoverImageUrl(request.get("coverImageUrl"));
+        }
+        if (request.containsKey("city")) {
+            profile.setCity(request.get("city"));
+        }
+        if (request.containsKey("state")) {
+            profile.setState(request.get("state"));
+        }
+        if (request.containsKey("country")) {
+            profile.setCountry(request.get("country"));
         }
         profile.setUpdatedAt(System.currentTimeMillis());
 

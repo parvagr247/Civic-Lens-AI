@@ -21,4 +21,8 @@ public class LeaderboardEntry {
     private Integer rank;
     private Integer reportsSubmitted;
     private Integer reportsResolved;
+    private String city;
+    private Integer accuracyRate;
+    private Integer badgesEarned;
+    private Integer streak;
 }

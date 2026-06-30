@@ -190,7 +190,7 @@ export default function CitizenDashboard() {
       </div>
 
       {/* Main Dashboard Workspace split */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left Column: Recent Reports Table */}
         <div id="reports-section" className="lg:col-span-8 space-y-6">

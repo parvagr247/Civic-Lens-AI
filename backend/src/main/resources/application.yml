@@ -41,7 +41,7 @@ app:
   firebase:
     config-path: ${FIREBASE_CONFIG_PATH:classpath:firebase-service-account.json}
     database-url: ${FIREBASE_DATABASE_URL:}
-    storage-bucket: ${FIREBASE_STORAGE_BUCKET:civiclens-ai.firebasestorage.app}
+    storage-bucket: ${FIREBASE_STORAGE_BUCKET:civiclens-prod-storage.firebasestorage.app}
 
 # Embabel Agent Framework Configuration
 embabel:

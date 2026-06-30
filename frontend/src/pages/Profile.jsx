@@ -243,13 +243,16 @@ export default function Profile() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl md:text-2xl font-black tracking-tight text-slate-905 dark:text-white">{profile.name}</h2>
-                <div className="flex items-center justify-center sm:justify-start gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">
+                <div className="flex items-center justify-center sm:justify-start gap-2 text-xs font-semibold text-slate-550 dark:text-slate-400 mt-1 flex-wrap">
                   <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-black uppercase">
                     {profile.level}
                   </span>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-550 border border-blue-500/20 text-[10px] font-black uppercase">
+                    Rank #{profile.rank || 99}
+                  </span>
                   <span className="flex items-center gap-1">
                     <MapPin size={12} className="text-emerald-500" />
-                    City Registry
+                    {profile.city || 'Portland'}, {profile.state || 'Oregon'}
                   </span>
                 </div>
               </div>
@@ -297,14 +300,10 @@ export default function Profile() {
               Citizen Reputation
             </h3>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-900 rounded-2xl text-center">
+            <div className="space-y-3">
+              <div className="p-4 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-900 rounded-2xl text-center">
                 <span className="text-[10px] text-slate-450 uppercase font-extrabold block">Contribution Score</span>
-                <span className="text-xl font-black text-emerald-500 mt-1 block">{profile.points}</span>
-              </div>
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-900 rounded-2xl text-center">
-                <span className="text-[10px] text-slate-450 uppercase font-extrabold block">Global Rank</span>
-                <span className="text-xl font-black text-slate-800 dark:text-white mt-1 block">#{profile.rank || 99}</span>
+                <span className="text-2xl font-black text-emerald-500 mt-1 block">{profile.points} XP</span>
               </div>
             </div>
 

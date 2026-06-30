@@ -63,4 +63,22 @@ public class ActivityLogFirestoreRepository {
             throw new FirebaseException("Failed to query activity audit trail", e);
         }
     }
+
+    /**
+     * Retrieves all activity logs from Firestore.
+     */
+    public List<ActivityLog> findAll() {
+        log.info("Firestore: Listing all activity logs");
+        try {
+            QuerySnapshot snapshot = firestore.collection(COLLECTION_NAME).get().get();
+            List<ActivityLog> logs = new ArrayList<>();
+            for (QueryDocumentSnapshot document : snapshot.getDocuments()) {
+                logs.add(document.toObject(ActivityLog.class));
+            }
+            return logs;
+        } catch (Exception e) {
+            log.error("Firestore Error: Failed to list all activity logs", e);
+            throw new FirebaseException("Failed to list all activity logs", e);
+        }
+    }
 }

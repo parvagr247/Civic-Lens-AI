@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   Shield,
   ShieldAlert,
-  Menu
+  Menu,
+  Trophy
 } from 'lucide-react';
 import { getCurrentUser, isAdmin, isOfficer, logout } from '../../services/authService';
 import '../../styles/layout/Sidebar.css';
@@ -154,6 +155,21 @@ const Sidebar = () => {
                 </NavLink>
 
                 <NavLink
+                  to="/leaderboard"
+                  title="Leaderboard"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
+                  }
+                >
+                  <Trophy className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Leaderboard</span>}
+                </NavLink>
+
+                <NavLink
                   to="/intelligence"
                   title="City Intelligence"
                   className={({ isActive }) =>
@@ -183,20 +199,7 @@ const Sidebar = () => {
                   {!collapsed && <span>Risk Intelligence</span>}
                 </NavLink>
 
-                <NavLink
-                  to="/copilot"
-                  title="AI Copilot"
-                  className={({ isActive }) =>
-                    `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive 
-                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
-                    } ${collapsed ? 'justify-center' : ''}`
-                  }
-                >
-                  <Bot className="w-4 h-4 shrink-0" />
-                  {!collapsed && <span>AI Copilot</span>}
-                </NavLink>
+
               </div>
             )}
           </div>
@@ -250,19 +253,21 @@ const Sidebar = () => {
                 </NavLink>
 
                 <NavLink
-                  to="/copilot"
-                  title="AI Copilot"
+                  to="/leaderboard"
+                  title="Leaderboard"
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
                       isActive 
-                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10' 
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
                     } ${collapsed ? 'justify-center' : ''}`
                   }
                 >
-                  <Bot className="w-4 h-4 shrink-0" />
-                  {!collapsed && <span>AI Copilot</span>}
+                  <Trophy className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Leaderboard</span>}
                 </NavLink>
+
+
               </div>
             )}
           </div>
@@ -330,20 +335,7 @@ const Sidebar = () => {
                   {!collapsed && <span>Risk Intelligence</span>}
                 </NavLink>
 
-                <NavLink
-                  to="/copilot"
-                  title="AI Copilot"
-                  className={({ isActive }) =>
-                    `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      isActive 
-                        ? 'bg-emerald-500 text-slate-950 shadow-md' 
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
-                    } ${collapsed ? 'justify-center' : ''}`
-                  }
-                >
-                  <Bot className="w-4 h-4 shrink-0" />
-                  {!collapsed && <span>AI Copilot</span>}
-                </NavLink>
+
 
                 <NavLink
                   to="/ai-insights"
@@ -373,6 +365,21 @@ const Sidebar = () => {
                 >
                   <ShieldAlert className="w-4 h-4 shrink-0" />
                   {!collapsed && <span>Community Moderation</span>}
+                </NavLink>
+
+                <NavLink
+                  to="/leaderboard"
+                  title="Leaderboard"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                      isActive 
+                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
+                    } ${collapsed ? 'justify-center' : ''}`
+                  }
+                >
+                  <Trophy className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>Leaderboard</span>}
                 </NavLink>
               </div>
             )}

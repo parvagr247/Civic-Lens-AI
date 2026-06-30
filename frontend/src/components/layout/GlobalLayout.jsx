@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
+import CivicLensAssistant from './CivicLensAssistant';
 
 const GlobalLayout = () => {
   return (
@@ -22,6 +23,9 @@ const GlobalLayout = () => {
           </div>
         </main>
       </div>
+
+      {/* Floating Assistant helper */}
+      <CivicLensAssistant />
     </div>
   );
 };

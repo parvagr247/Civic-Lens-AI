@@ -2,7 +2,8 @@ package com.configuration;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
-import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
@@ -92,20 +93,37 @@ public class FirebaseConfiguration {
     }
 
     /**
-     * Exposes default Firebase Cloud Storage Bucket client as a bean.
+     * Exposes default Google Cloud Storage client as a bean.
      */
     @Bean
-    public Bucket storageBucket(FirebaseApp firebaseApp) {
-        if (storageBucket == null || storageBucket.trim().isEmpty()) {
-            log.info("Google Firebase Storage bucket is not configured. Returning null Bucket bean.");
-            return null;
-        }
-        log.info("Registering Google Firebase Storage bucket bean: {}", storageBucket);
+    public Storage googleCloudStorage() {
+        log.info("Registering Google Cloud Storage client bean using credentials resource.");
         try {
-            return StorageClient.getInstance(firebaseApp).bucket();
+            String resolvedPath = firebaseConfigPath;
+            if (resolvedPath == null || resolvedPath.trim().isEmpty()) {
+                resolvedPath = "classpath:firebase-service-account.json";
+            }
+            Resource resource = resourceLoader.getResource(resolvedPath);
+            if (!resource.exists()) {
+                throw new FirebaseException("Firebase credentials resource file not found at " + resolvedPath);
+            }
+            try (InputStream serviceAccount = resource.getInputStream()) {
+                GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
+                Storage storage = StorageOptions.newBuilder()
+                        .setCredentials(credentials)
+                        .setProjectId("civic-lens-b4d47")
+                        .build()
+                        .getService();
+                if (storage == null) {
+                    log.error("Google Cloud Storage client initialized as null.");
+                    throw new FirebaseException("Google Cloud Storage client initialized as null.");
+                }
+                log.info("Google Cloud Storage client bean registered successfully.");
+                return storage;
+            }
         } catch (Exception e) {
-            log.warn("Google Firebase Storage bucket '{}' could not be initialized: {}. Cloud storage operations will be disabled.", storageBucket, e.getMessage());
-            return null;
+            log.error("Google Cloud Storage client could not be initialized. Stacktrace:", e);
+            throw new FirebaseException("Google Cloud Storage client could not be initialized.", e);
         }
     }
 }

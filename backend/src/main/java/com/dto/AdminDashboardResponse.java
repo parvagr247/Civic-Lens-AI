@@ -30,4 +30,14 @@ public class AdminDashboardResponse {
     private Map<String, Long> priorityCounts;
     private List<IncidentResponse> recentUploads;
     private List<String> aiRecommendations;
+
+    private Long openIncidents;
+    private Long awaitingAssignment;
+    private Long assignedToday;
+    private Long resolvedToday;
+    private Double averageAiConfidence;
+    private Map<String, Long> departmentWorkload;
+    private String systemHealth;
+    private List<String> emergencyAlerts;
+    private List<String> recentActivityFeed;
 }

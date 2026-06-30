@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import GlobalLayout from '../components/layout/GlobalLayout';
+import TitleManager from '../components/layout/TitleManager';
 
 // Lazy load large pages for optimized production chunking
 const CitizenDashboard = lazy(() => import('../pages/CitizenDashboard'));
@@ -22,6 +23,7 @@ const AnonymousTracker = lazy(() => import('../pages/AnonymousTracker'));
 const ModerationDashboard = lazy(() => import('../pages/ModerationDashboard'));
 const Landing = lazy(() => import('../pages/Landing'));
 const Profile = lazy(() => import('../pages/Profile'));
+const Leaderboard = lazy(() => import('../pages/Leaderboard'));
 
 // Route Guards
 import ProtectedRoute from './ProtectedRoute';
@@ -41,6 +43,7 @@ const PageLoader = () => (
 const AppRoutes = () => {
   return (
     <Suspense fallback={<PageLoader />}>
+      <TitleManager />
       <Routes>
         {/* Guest Only Routes (Login/Register) */}
         <Route
@@ -79,10 +82,10 @@ const AppRoutes = () => {
           <Route path="feed" element={<CommunityFeed />} />
           <Route path="intelligence" element={<CityIntelligence />} />
           <Route path="risk-intelligence" element={<RiskDashboard />} />
-          <Route path="copilot" element={<AICopilot />} />
           <Route path="settings" element={<Settings />} />
           <Route path="incidents/:id" element={<ReportDetails />} />
           <Route path="profile/:userId" element={<Profile />} />
+          <Route path="leaderboard" element={<Leaderboard />} />
 
           {/* Admin Dashboard Page (requires Admin authorization) */}
           <Route
