@@ -21,10 +21,11 @@ export const Button = React.forwardRef(({
 
   const variants = {
     primary: 'bg-primary text-primary-foreground hover:bg-primary/95 focus:ring-primary shadow-sm',
-    secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:ring-secondary border border-border',
-    outline: 'bg-transparent border border-border text-foreground hover:bg-secondary focus:ring-primary',
-    ghost: 'bg-transparent text-foreground hover:bg-secondary focus:ring-primary',
+    secondary: 'bg-secondary text-secondary-foreground hover:bg-gray-50 dark:hover:bg-slate-800/80 focus:ring-secondary border border-border',
+    outline: 'bg-transparent border border-border text-foreground hover:bg-gray-100 dark:hover:bg-slate-800/50 focus:ring-primary',
+    ghost: 'bg-transparent text-foreground hover:bg-gray-100 dark:hover:bg-slate-800/50 focus:ring-primary',
     danger: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive',
+    success: 'bg-emerald-600 text-white hover:bg-emerald-500 focus:ring-emerald-500 shadow-sm dark:bg-emerald-600 dark:text-white dark:hover:bg-emerald-500 dark:focus:ring-emerald-500',
   };
 
   const sizes = {

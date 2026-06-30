@@ -127,23 +127,23 @@ export default function IssueUploadForm({ onAnalysisSuccess }) {
   }
 
   return (
-    <Card className="max-w-2xl mx-auto p-6 md:p-8 bg-slate-900/40 backdrop-blur-md border-slate-800/80 shadow-2xl">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-          <Sparkles className="text-emerald-400" size={20} />
+    <Card className="max-w-2xl mx-auto p-6 md:p-8 bg-card border-border/80 shadow-2xl">
+      <div className="mb-6 animate-fade-in">
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Sparkles className="text-emerald-500 dark:text-emerald-400 animate-pulse-subtle" size={20} />
           Report New Incident
         </h2>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Upload a photo of the civic issue. Gemini Vision will analyze structural damages, categorize the issue, and draft a response.
         </p>
       </div>
 
       {errorMessage && (
-        <div className="flex items-start gap-2.5 text-sm text-rose-400 bg-rose-950/40 border border-rose-900/60 p-4 rounded-xl mb-6 animate-fade-in">
+        <div className="flex items-start gap-2.5 text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 p-4 rounded-xl mb-6 animate-fade-in">
           <AlertCircle size={18} className="shrink-0 mt-0.5" />
           <div className="flex-1">
             <span className="font-semibold">Validation Error</span>
-            <p className="text-xs text-rose-300/80 mt-0.5">{errorMessage}</p>
+            <p className="text-xs text-rose-700/80 dark:text-rose-300/80 mt-0.5">{errorMessage}</p>
           </div>
         </div>
       )}
@@ -159,9 +159,9 @@ export default function IssueUploadForm({ onAnalysisSuccess }) {
 
         {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1.5 flex items-center gap-1">
-            <FileText size={14} className="text-slate-400" />
-            Short Title <span className="text-emerald-400">*</span>
+          <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+            <FileText size={14} className="text-gray-400 dark:text-slate-500" />
+            Short Title <span className="text-emerald-500 dark:text-emerald-400">*</span>
           </label>
           <input
             type="text"
@@ -169,14 +169,14 @@ export default function IssueUploadForm({ onAnalysisSuccess }) {
             placeholder="e.g. Deep pothole near main traffic light intersection"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 text-slate-200 px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-slate-650 transition-all duration-200"
+            className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-200 px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-gray-400 dark:placeholder-slate-600 transition-all duration-200 shadow-sm"
           />
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1.5">
-            Detailed Description <span className="text-emerald-400">*</span>
+          <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+            Detailed Description <span className="text-emerald-500 dark:text-emerald-400">*</span>
           </label>
           <textarea
             required
@@ -184,7 +184,7 @@ export default function IssueUploadForm({ onAnalysisSuccess }) {
             placeholder="Explain the issue details. Include context like vehicle safety hazards, street address landmarks, and duration of the problem."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 text-slate-200 px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-slate-650 transition-all duration-200 resize-y"
+            className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-200 px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-gray-400 dark:placeholder-slate-600 transition-all duration-200 resize-y shadow-sm"
           />
         </div>
 
@@ -205,15 +205,15 @@ export default function IssueUploadForm({ onAnalysisSuccess }) {
             type="checkbox" 
             checked={anonymous} 
             onChange={() => {}} 
-            className="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-0 cursor-pointer"
+            className="rounded border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-500 focus:ring-0 cursor-pointer"
           />
-          <span className="text-xs text-slate-350 font-semibold">
+          <span className="text-xs text-gray-600 dark:text-slate-300 font-semibold">
             Report Anonymously (Hide your identity from public social feeds)
           </span>
         </div>
 
         {/* Submit */}
-        <div className="pt-4 border-t border-slate-800 flex justify-end">
+        <div className="pt-4 border-t border-gray-200 dark:border-slate-800 flex justify-end">
           <Button
             type="submit"
             variant="success"

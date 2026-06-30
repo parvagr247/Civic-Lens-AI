@@ -2,13 +2,20 @@ import React from 'react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-export const Card = React.forwardRef(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={twMerge('bg-card text-card-foreground rounded-xl border border-border shadow-sm transition-all duration-300 hover:shadow-md', className)}
-    {...props}
-  />
-));
+export const Card = React.forwardRef(({ className, ...props }, ref) => {
+  // Strip hardcoded dark background and border overrides to preserve dynamic theme tokens
+  const cleanClassName = className
+    ?.replace(/\bbg-slate-\S+/g, '')
+    ?.replace(/\bborder-slate-\S+/g, '');
+
+  return (
+    <div
+      ref={ref}
+      className={twMerge('bg-card text-card-foreground rounded-xl border border-border shadow-sm transition-all duration-300 hover:shadow-md', cleanClassName)}
+      {...props}
+    />
+  );
+});
 Card.displayName = 'Card';
 
 export const CardHeader = React.forwardRef(({ className, ...props }, ref) => (

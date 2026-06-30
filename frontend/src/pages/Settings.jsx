@@ -174,18 +174,18 @@ export default function Settings() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-6 animate-fade-in text-slate-200">
+    <div className="max-w-6xl mx-auto py-6 animate-fade-in text-foreground">
       
       {/* Title */}
-      <div className="border-b border-slate-850 pb-5 mb-8">
-        <h2 className="text-2xl font-black text-white tracking-tight">System Settings</h2>
-        <p className="text-xs text-slate-450 mt-1 font-medium">Manage profile configurations, system alerts, visual themes, and security integrations.</p>
+      <div className="border-b border-border pb-5 mb-8">
+        <h2 className="text-2xl font-black text-foreground tracking-tight">System Settings</h2>
+        <p className="text-xs text-muted-foreground mt-1 font-medium">Manage profile configurations, system alerts, visual themes, and security integrations.</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 items-start w-full">
         
         {/* Left Side: Navigation List */}
-        <div className="w-full md:w-60 shrink-0 flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible border-b md:border-b-0 md:border-r border-slate-850 pb-3 md:pb-0 md:pr-5 gap-1 scrollbar-none">
+        <div className="w-full md:w-60 shrink-0 flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible border-b md:border-b-0 md:border-r border-border pb-3 md:pb-0 md:pr-5 gap-1 scrollbar-none">
           {navItems.map((item) => {
             const IconComponent = item.icon;
             const isActive = activeCategory === item.id;
@@ -196,11 +196,11 @@ export default function Settings() {
                 onClick={() => setActiveCategory(item.id)}
                 className={`flex items-center gap-3 px-3 py-2 text-xs font-bold rounded-xl transition-all w-full text-left whitespace-nowrap md:whitespace-normal shrink-0 ${
                   isActive 
-                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shadow-sm shadow-emerald-500/5' 
-                    : 'border border-transparent text-slate-450 hover:text-white hover:bg-slate-900/40'
+                    ? 'bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-250 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 shadow-sm' 
+                    : 'border border-transparent text-gray-500 dark:text-slate-450 hover:text-gray-900 dark:hover:text-white hover:bg-gray-155 dark:hover:bg-slate-905/40'
                 }`}
               >
-                <IconComponent size={14} className={isActive ? 'text-emerald-400' : 'text-slate-500'} />
+                <IconComponent size={14} className={isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-slate-500'} />
                 {item.label}
               </button>
             );
@@ -208,14 +208,14 @@ export default function Settings() {
         </div>
 
         {/* Right Side: Tab Panel Content */}
-        <div className="flex-1 min-w-0 bg-slate-900/15 border border-slate-850 p-6 rounded-2xl shadow-xl w-full">
+        <div className="flex-1 min-w-0 bg-card border border-border p-6 rounded-2xl shadow-sm w-full">
           
           {/* CATEGORY 1: ACCOUNT */}
           {activeCategory === 'account' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-base font-extrabold text-white">Account Settings</h3>
-                <p className="text-[11px] text-slate-450 mt-0.5">Manage credentials, primary contact parameters, and registration records.</p>
+                <h3 className="text-base font-extrabold text-foreground">Account Settings</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Manage credentials, primary contact parameters, and registration records.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

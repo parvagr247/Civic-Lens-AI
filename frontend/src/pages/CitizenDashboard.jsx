@@ -53,11 +53,11 @@ export default function CitizenDashboard() {
     switch (sev) {
       case 'CRITICAL':
       case 'HIGH': 
-        return 'bg-rose-950/40 border-rose-900/60 text-rose-400';
+        return 'bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400';
       case 'MEDIUM': 
-        return 'bg-amber-950/40 border-amber-900/60 text-amber-400';
+        return 'bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400';
       default: 
-        return 'bg-slate-900 border-slate-800 text-slate-400';
+        return 'bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-400';
     }
   };
 
@@ -67,16 +67,16 @@ export default function CitizenDashboard() {
     switch (stat) {
       case 'RESOLVED':
       case 'CLOSED':
-        return 'bg-emerald-950/40 border-emerald-900/60 text-emerald-400';
+        return 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400';
       case 'IN_PROGRESS':
-        return 'bg-blue-950/40 border-blue-900/60 text-blue-400';
+        return 'bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-blue-400';
       case 'INVESTIGATING':
       case 'ASSIGNED':
-        return 'bg-amber-950/40 border-amber-900/60 text-amber-400';
+        return 'bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-700 dark:text-amber-400';
       case 'UNDER_REVIEW':
       case 'REPORTED':
       default:
-        return 'bg-slate-900 border-slate-800 text-slate-400';
+        return 'bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-400';
     }
   };
 
@@ -84,12 +84,6 @@ export default function CitizenDashboard() {
   const getStepState = (stepIndex, status) => {
     const statusUpper = status?.toUpperCase() || 'REPORTED';
     
-    // Status orders:
-    // 0: REPORTED
-    // 1: UNDER_REVIEW
-    // 2: INVESTIGATING / ASSIGNED
-    // 3: IN_PROGRESS
-    // 4: RESOLVED / CLOSED
     const statusOrder = {
       'REPORTED': 0,
       'UNDER_REVIEW': 1,
@@ -116,26 +110,27 @@ export default function CitizenDashboard() {
   const mostRecentReport = data?.recentReports && data.recentReports.length > 0 ? data.recentReports[0] : null;
 
   return (
-    <div className="space-y-6 text-slate-200">
+    <div className="space-y-6 text-foreground">
       
       {/* Top Banner section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-850 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h2 className="text-2xl font-black text-white tracking-tight">Welcome back, {data?.name || 'Citizen'}</h2>
-          <p className="text-xs text-slate-450 mt-1 font-medium">Here's the latest status of your civic reports.</p>
+          <h2 className="text-2xl font-black text-foreground tracking-tight">Welcome back, {data?.name || 'Citizen'}</h2>
+          <p className="text-xs text-muted-foreground mt-1 font-medium">Here's the latest status of your civic reports.</p>
         </div>
         
         <div className="flex items-center gap-3">
           <Button
             onClick={() => navigate('/analyze')}
-            className="bg-emerald-500 hover:bg-emerald-400 text-slate-955 text-xs font-bold py-2.5 px-4 rounded-xl shadow active:scale-[0.99]"
+            variant="success"
+            className="text-xs font-bold py-2.5 px-4 rounded-xl shadow active:scale-[0.99]"
           >
             Report New Issue
           </Button>
           <Button
             onClick={() => navigate('/track')}
             variant="outline"
-            className="text-xs font-bold py-2.5 px-4 border-slate-800 text-slate-350 hover:bg-slate-850 rounded-xl"
+            className="text-xs font-bold py-2.5 px-4 rounded-xl"
           >
             Track Report
           </Button>
@@ -145,46 +140,46 @@ export default function CitizenDashboard() {
       {/* Grid: Quick Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Active Reports */}
-        <Card className="p-4 bg-slate-900/30 border-slate-850 flex items-center gap-4 shadow-md">
-          <div className="p-3 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-xl">
+        <Card className="p-4 bg-card border-border flex items-center gap-4 shadow-md">
+          <div className="p-3 bg-blue-500/10 border border-blue-500/30 text-blue-500 rounded-xl">
             <Activity size={20} />
           </div>
           <div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold block">Active Reports</span>
-            <span className="text-xl font-black text-white">{activeReportsCount}</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold block">Active Reports</span>
+            <span className="text-xl font-black text-foreground">{activeReportsCount}</span>
           </div>
         </Card>
 
         {/* Resolved Reports */}
-        <Card className="p-4 bg-slate-900/30 border-slate-850 flex items-center gap-4 shadow-md">
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-450 rounded-xl">
+        <Card className="p-4 bg-card border-border flex items-center gap-4 shadow-md">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl">
             <CheckCircle size={20} />
           </div>
           <div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold block">Resolved Reports</span>
-            <span className="text-xl font-black text-white">{data?.reportsResolved || 0}</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold block">Resolved Reports</span>
+            <span className="text-xl font-black text-foreground">{data?.reportsResolved || 0}</span>
           </div>
         </Card>
 
         {/* Reports Awaiting Action */}
-        <Card className="p-4 bg-slate-900/30 border-slate-850 flex items-center gap-4 shadow-md">
-          <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-xl">
+        <Card className="p-4 bg-card border-border flex items-center gap-4 shadow-md">
+          <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-550 rounded-xl">
             <Clock size={20} />
           </div>
           <div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold block">Awaiting Action</span>
-            <span className="text-xl font-black text-white">{awaitingActionCount}</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold block">Awaiting Action</span>
+            <span className="text-xl font-black text-foreground">{awaitingActionCount}</span>
           </div>
         </Card>
 
         {/* Average Resolution Time */}
-        <Card className="p-4 bg-slate-900/30 border-slate-850 flex items-center gap-4 shadow-md">
-          <div className="p-3 bg-purple-500/10 border border-purple-500/30 text-purple-400 rounded-xl">
+        <Card className="p-4 bg-card border-border flex items-center gap-4 shadow-md">
+          <div className="p-3 bg-purple-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-400 rounded-xl">
             <Zap size={20} />
           </div>
           <div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold block">Avg Resolution Time</span>
-            <span className="text-xl font-black text-white">2.4 Days</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold block">Avg Resolution Time</span>
+            <span className="text-xl font-black text-foreground">2.4 Days</span>
           </div>
         </Card>
       </div>
@@ -194,27 +189,28 @@ export default function CitizenDashboard() {
         
         {/* Left Column: Recent Reports Table */}
         <div id="reports-section" className="lg:col-span-8 space-y-6">
-          <Card className="p-5 bg-slate-900/30 border-slate-850 shadow-2xl space-y-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-850 pb-3">
-              <FileText size={14} className="text-emerald-500" />
+          <Card className="p-5 bg-card border-border shadow-2xl space-y-4">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-3">
+              <FileText size={14} className="text-emerald-500 dark:text-emerald-455" />
               Your Recent Reports
             </h3>
 
             {(!data?.recentReports || data.recentReports.length === 0) ? (
               <div className="text-center py-12 space-y-4 animate-scale-in max-w-sm mx-auto">
-                <div className="w-12 h-12 rounded-full bg-slate-950 border border-slate-850 text-slate-500 flex items-center justify-center mx-auto">
+                <div className="w-12 h-12 rounded-full bg-gray-50 dark:bg-slate-950 border border-border text-muted-foreground flex items-center justify-center mx-auto">
                   <FileText size={22} />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-sm font-extrabold text-white">No reports yet</h4>
-                  <p className="text-[10px] text-slate-450 leading-normal max-w-xs mx-auto font-medium">
+                  <h4 className="text-sm font-extrabold text-foreground">No reports yet</h4>
+                  <p className="text-[10px] text-muted-foreground leading-normal max-w-xs mx-auto font-medium">
                     Start improving your community by reporting your first civic issue.
                   </p>
                 </div>
                 <div className="pt-2">
                   <Button 
                     onClick={() => navigate('/analyze')}
-                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-955 text-xs py-2 font-bold rounded-xl active:scale-[0.99]"
+                    variant="success"
+                    className="w-full text-xs py-2 font-bold rounded-xl active:scale-[0.99]"
                   >
                     Report Your First Issue
                   </Button>
@@ -224,7 +220,7 @@ export default function CitizenDashboard() {
               <div className="overflow-x-auto scrollbar-thin">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-850 text-slate-500 font-bold uppercase text-[9px] tracking-wider">
+                    <tr className="border-b border-border text-muted-foreground font-bold uppercase text-[9px] tracking-wider">
                       <th className="py-2.5 pr-4">Issue</th>
                       <th className="py-2.5 px-4 hidden md:table-cell">Location</th>
                       <th className="py-2.5 px-4 hidden sm:table-cell">Report ID</th>
@@ -238,35 +234,35 @@ export default function CitizenDashboard() {
                     {data.recentReports.map(report => (
                       <tr 
                         key={report.id} 
-                        className="border-b border-slate-850/50 hover:bg-slate-950/20 transition-all font-medium text-slate-350"
+                        className="border-b border-border/50 hover:bg-gray-50/50 dark:hover:bg-slate-950/20 transition-all font-medium text-gray-700 dark:text-slate-300"
                       >
-                        <td className="py-3 pr-4 font-bold text-slate-200 truncate max-w-[120px]">{report.title}</td>
+                        <td className="py-3 pr-4 font-bold text-foreground truncate max-w-[120px]">{report.title}</td>
                         <td className="py-3 px-4 hidden md:table-cell truncate max-w-[140px]">
                           <span className="flex items-center gap-1">
-                            <MapPin size={11} className="text-slate-500" />
+                            <MapPin size={11} className="text-muted-foreground" />
                             {report.address || 'City Limits'}
                           </span>
                         </td>
-                        <td className="py-3 px-4 hidden sm:table-cell font-mono text-[10px] text-slate-500">
+                        <td className="py-3 px-4 hidden sm:table-cell font-mono text-[10px] text-muted-foreground">
                           {report.trackingId || report.id?.substring(0, 8).toUpperCase() || 'N/A'}
                         </td>
-                        <td className="py-3 px-4 hidden lg:table-cell text-slate-500">
+                        <td className="py-3 px-4 hidden lg:table-cell text-muted-foreground">
                           {new Date(report.createdAt).toLocaleDateString()}
                         </td>
                         <td className="py-3 px-4">
-                          <span className={`inline-block px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border ${getStatusColor(report.status)}`}>
+                          <span className={`inline-block px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${getStatusColor(report.status)}`}>
                             {report.status?.replace('_', ' ')}
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border ${getPriorityColor(report.severity)}`}>
+                          <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${getPriorityColor(report.severity)}`}>
                             {report.severity || 'MEDIUM'}
                           </span>
                         </td>
                         <td className="py-3 pl-4 text-right">
                           <button
                             onClick={() => navigate(`/incidents/${report.id}`)}
-                            className="p-1 rounded-lg text-slate-500 hover:text-emerald-450 hover:bg-slate-850/40 transition-all"
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-gray-100 dark:hover:bg-slate-800/60 transition-all"
                             title="View Incident Details"
                           >
                             <Eye size={14} />
@@ -286,16 +282,16 @@ export default function CitizenDashboard() {
           
           {/* Vertical Report Timeline */}
           {mostRecentReport && (
-            <Card className="p-5 bg-slate-900/30 border-slate-850 shadow-2xl space-y-4">
-              <div className="border-b border-slate-850 pb-2.5">
-                <span className="text-[9px] font-bold text-slate-550 uppercase tracking-widest block leading-none">Latest Report Timeline</span>
-                <span className="text-xs font-extrabold text-white block mt-1 truncate">{mostRecentReport.title}</span>
+            <Card className="p-5 bg-card border-border shadow-2xl space-y-4">
+              <div className="border-b border-border pb-2.5">
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block leading-none">Latest Report Timeline</span>
+                <span className="text-xs font-extrabold text-foreground block mt-1 truncate">{mostRecentReport.title}</span>
               </div>
 
               <div className="space-y-4.5 pl-2 relative pt-1">
                 
                 {/* Timeline vertical bar */}
-                <div className="absolute top-2.5 bottom-2.5 left-4 w-0.5 bg-slate-850" />
+                <div className="absolute top-2.5 bottom-2.5 left-4 w-0.5 bg-border" />
 
                 {[
                   { title: 'Submitted', desc: 'Report successfully registered.' },
@@ -312,16 +308,16 @@ export default function CitizenDashboard() {
                       {/* Timeline dot state */}
                       <div className="z-10 shrink-0 mt-0.5">
                         {state === 'completed' ? (
-                          <div className="w-8 h-8 rounded-full bg-emerald-950/80 border border-emerald-500 text-emerald-400 flex items-center justify-center shadow shadow-emerald-500/10">
+                          <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow shadow-emerald-500/10">
                             <CheckCircle size={14} />
                           </div>
                         ) : state === 'active' ? (
-                          <div className="w-8 h-8 rounded-full bg-emerald-500 text-slate-955 flex items-center justify-center font-bold text-xs shadow-md shadow-emerald-500/20 animate-pulse border border-emerald-400">
+                          <div className="w-8 h-8 rounded-full bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 flex items-center justify-center font-bold text-xs shadow-md shadow-emerald-500/20 animate-pulse border border-emerald-500 dark:border-emerald-400">
                             <Clock size={14} />
                           </div>
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-slate-950 border border-slate-850 text-slate-600 flex items-center justify-center">
-                            <Circle size={6} className="fill-slate-850" />
+                          <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-950 border border-border text-muted-foreground flex items-center justify-center">
+                            <Circle size={6} className="fill-gray-300 dark:fill-slate-800" />
                           </div>
                         )}
                       </div>
@@ -329,11 +325,11 @@ export default function CitizenDashboard() {
                       {/* Content block */}
                       <div className="text-left space-y-0.5">
                         <span className={`block text-[11px] font-bold transition-colors ${
-                          state === 'completed' ? 'text-emerald-400' : state === 'active' ? 'text-white' : 'text-slate-550'
+                          state === 'completed' ? 'text-emerald-600 dark:text-emerald-400' : state === 'active' ? 'text-foreground' : 'text-muted-foreground'
                         }`}>
                           {step.title}
                         </span>
-                        <span className="block text-[9px] text-slate-500 leading-normal font-semibold">
+                        <span className="block text-[9px] text-muted-foreground leading-normal font-semibold">
                           {step.desc}
                         </span>
                       </div>
@@ -347,8 +343,8 @@ export default function CitizenDashboard() {
           )}
 
           {/* Quick Actions Shortcuts */}
-          <Card className="p-5 bg-slate-900/30 border-slate-850 shadow-2xl space-y-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-850 pb-3">
+          <Card className="p-5 bg-card border-border shadow-2xl space-y-4">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-3">
               <Zap size={14} className="text-emerald-500" />
               Quick Actions
             </h3>
@@ -356,7 +352,8 @@ export default function CitizenDashboard() {
             <div className="flex flex-col gap-2 font-bold text-xs">
               <Button
                 onClick={() => navigate('/analyze')}
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-955 text-xs py-2 shadow-sm active:scale-95 border-0 w-full text-center"
+                variant="success"
+                className="text-xs py-2 shadow-sm active:scale-95 border-0 w-full text-center"
               >
                 Report New Issue
               </Button>
@@ -364,7 +361,7 @@ export default function CitizenDashboard() {
               <Button
                 onClick={() => navigate('/track')}
                 variant="outline"
-                className="border-slate-800 hover:bg-slate-850 text-slate-350 text-xs py-2 active:scale-95 shadow-sm w-full"
+                className="text-xs py-2 active:scale-95 shadow-sm w-full"
               >
                 Track Existing Report
               </Button>
@@ -375,7 +372,7 @@ export default function CitizenDashboard() {
                   if (elem) elem.scrollIntoView({ behavior: 'smooth' });
                 }}
                 variant="outline"
-                className="border-slate-800 hover:bg-slate-850 text-slate-350 text-xs py-2 active:scale-95 shadow-sm w-full"
+                className="text-xs py-2 active:scale-95 shadow-sm w-full"
               >
                 View All Reports
               </Button>
@@ -383,7 +380,7 @@ export default function CitizenDashboard() {
               <Button
                 onClick={() => navigate('/settings')}
                 variant="outline"
-                className="border-slate-800 hover:bg-slate-850 text-slate-350 text-xs py-2 active:scale-95 shadow-sm w-full"
+                className="text-xs py-2 active:scale-95 shadow-sm w-full"
               >
                 Edit Profile
               </Button>
@@ -391,22 +388,22 @@ export default function CitizenDashboard() {
           </Card>
 
           {/* Notifications Card */}
-          <Card className="p-5 bg-slate-900/30 border-slate-850 shadow-2xl space-y-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-850 pb-3">
+          <Card className="p-5 bg-card border-border shadow-2xl space-y-4">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-3">
               <Bell size={14} className="text-emerald-500" />
               Recent Alerts & Updates
             </h3>
 
-            <div className="space-y-3 font-semibold text-[10px] leading-relaxed text-slate-400">
+            <div className="space-y-3 font-semibold text-[10px] leading-relaxed text-muted-foreground">
               {(!data?.activityTimeline || data.activityTimeline.length === 0) ? (
-                <p className="text-center py-6 text-slate-500 font-medium">No recent logs to display.</p>
+                <p className="text-center py-6 text-muted-foreground font-medium">No recent logs to display.</p>
               ) : (
                 data.activityTimeline.slice(0, 5).map((log) => (
-                  <div key={log.id} className="p-2.5 bg-slate-950/40 border border-slate-850/60 rounded-lg flex gap-2 items-start">
+                  <div key={log.id} className="p-2.5 bg-gray-50/50 dark:bg-slate-950/40 border border-border rounded-lg flex gap-2 items-start">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5 animate-pulse" />
                     <div>
-                      <p className="text-slate-300">{log.description}</p>
-                      <span className="block text-[8px] text-slate-550 mt-1 font-mono">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <p className="text-foreground/90">{log.description}</p>
+                      <span className="block text-[8px] text-muted-foreground mt-1 font-mono">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </div>
                 ))

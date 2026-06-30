@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Navigation, Loader2, AlertTriangle } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '../ui/ToastProvider';
 
 /**
@@ -12,10 +12,10 @@ export default function LocationInput({ latitude, longitude, address, onChange }
   const [insecureWarning, setInsecureWarning] = useState(false);
 
   const handleGetCurrentLocation = () => {
-    // Detect whether browser supports geolocation and is running in a secure context
-    if (!navigator.geolocation || !window.isSecureContext) {
+    // Attempt navigator geolocation first
+    if (!navigator.geolocation) {
       setInsecureWarning(true);
-      toast('Location detection is blocked on HTTP connections.', 'warning');
+      toast('Location detection is not supported by your browser.', 'warning');
       return;
     }
 
@@ -59,21 +59,7 @@ export default function LocationInput({ latitude, longitude, address, onChange }
       (error) => {
         console.error('Error fetching position', error);
         setDetecting(false);
-        
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            toast('Location permission denied. Please grant permission in browser settings or enter manually.', 'error');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            toast('Position unavailable. Please specify coordinates manually.', 'error');
-            break;
-          case error.TIMEOUT:
-            toast('Location detection request timed out. Please try again or enter manually.', 'error');
-            break;
-          default:
-            toast(`Failed to detect location: ${error.message}`, 'error');
-            break;
-        }
+        setInsecureWarning(true);
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
@@ -82,15 +68,15 @@ export default function LocationInput({ latitude, longitude, address, onChange }
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-300 flex items-center gap-1.5">
-          <MapPin size={16} className="text-emerald-400" />
-          Location details <span className="text-emerald-400">*</span>
+        <label className="text-sm font-semibold text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
+          <MapPin size={16} className="text-emerald-500 dark:text-emerald-400" />
+          Location Details <span className="text-emerald-500 dark:text-emerald-400">*</span>
         </label>
         <button
           type="button"
           onClick={handleGetCurrentLocation}
           disabled={detecting}
-          className="flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 font-medium px-2.5 py-1 bg-emerald-950/40 border border-emerald-900/60 hover:bg-emerald-950/80 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-400 dark:hover:bg-emerald-950/80 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
         >
           {detecting ? (
             <>
@@ -106,26 +92,41 @@ export default function LocationInput({ latitude, longitude, address, onChange }
         </button>
       </div>
 
-      {/* Insecure Context warning alerts panel */}
+      {/* Geolocation Info Panel */}
       {insecureWarning && (
-        <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-900/40 text-amber-400 space-y-3 animate-fade-in">
-          <div className="flex items-start gap-2.5 text-xs font-bold leading-normal">
-            <AlertTriangle className="shrink-0 mt-0.5 text-amber-400 animate-pulse" size={16} />
-            <div>
-              <p>Current location is only available when CivicLens is accessed over HTTPS.</p>
-              <p className="text-[10px] text-slate-400 font-semibold mt-1">Please select an action below to proceed:</p>
+        <div className="p-5 rounded-2xl bg-gray-50 dark:bg-slate-900/60 border border-gray-200 dark:border-slate-800 space-y-4 animate-fade-in shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-lg shrink-0">
+              <MapPin size={18} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-slate-200">Location Detection Restricted</h4>
+              <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
+                Your browser blocks automatic geolocation on insecure HTTP connections. Placing this deployment on HTTPS will restore automatic location detection.
+              </p>
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mt-1.5">
+                Manual coordinates and address options remain fully available.
+              </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2.5 pl-6">
+          <div className="flex flex-wrap gap-2.5 pt-2 pl-11">
+            <button
+              type="button"
+              onClick={handleGetCurrentLocation}
+              disabled={detecting}
+              className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold shadow-sm transition-all duration-200"
+            >
+              {detecting ? 'Retrying...' : 'Retry Detection'}
+            </button>
             <button
               type="button"
               onClick={() => {
                 setInsecureWarning(false);
                 toast('Please enter coordinates and address manually below.', 'info');
               }}
-              className="text-[10px] bg-amber-500 text-slate-955 px-3 py-1.5 rounded-lg font-extrabold hover:bg-amber-400 transition-all duration-200"
+              className="text-xs bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-700 px-4 py-2 rounded-lg font-semibold shadow-sm transition-all duration-200"
             >
-              Enter location manually
+              Enter Location Manually
             </button>
             <button
               type="button"
@@ -133,9 +134,9 @@ export default function LocationInput({ latitude, longitude, address, onChange }
                 setInsecureWarning(false);
                 toast('Continuing without automatic location.', 'info');
               }}
-              className="text-[10px] border border-amber-900/60 text-amber-300 hover:bg-amber-950/40 px-3 py-1.5 rounded-lg font-bold transition-all duration-200"
+              className="text-xs bg-transparent hover:bg-gray-100 dark:hover:bg-slate-850 text-gray-500 dark:text-slate-400 px-4 py-2 rounded-lg font-medium transition-all duration-200"
             >
-              Continue without automatic location
+              Continue without Location
             </button>
           </div>
         </div>
@@ -143,37 +144,37 @@ export default function LocationInput({ latitude, longitude, address, onChange }
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs text-slate-400 mb-1.5">Latitude</label>
+          <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5">Latitude</label>
           <input
             type="number"
             step="any"
             placeholder="e.g. 40.7128"
             value={latitude || ''}
             onChange={(e) => onChange('latitude', e.target.value ? parseFloat(e.target.value) : '')}
-            className="w-full bg-slate-900 border border-slate-700 text-slate-200 px-3.5 py-2 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-slate-600 transition-all duration-200"
+            className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-200 px-3.5 py-2 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-gray-400 dark:placeholder-slate-600 transition-all duration-200 shadow-sm"
           />
         </div>
         <div>
-          <label className="block text-xs text-slate-400 mb-1.5">Longitude</label>
+          <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5">Longitude</label>
           <input
             type="number"
             step="any"
             placeholder="e.g. -74.0060"
             value={longitude || ''}
             onChange={(e) => onChange('longitude', e.target.value ? parseFloat(e.target.value) : '')}
-            className="w-full bg-slate-900 border border-slate-700 text-slate-200 px-3.5 py-2 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-slate-600 transition-all duration-200"
+            className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-200 px-3.5 py-2 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-gray-400 dark:placeholder-slate-600 transition-all duration-200 shadow-sm"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs text-slate-400 mb-1.5">Physical Address / Landmark</label>
+        <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1.5">Physical Address / Landmark</label>
         <input
           type="text"
           placeholder="e.g. 5th Avenue and 34th Street, New York"
           value={address || ''}
           onChange={(e) => onChange('address', e.target.value)}
-          className="w-full bg-slate-900 border border-slate-700 text-slate-200 px-3.5 py-2 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-slate-600 transition-all duration-200"
+          className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-200 px-3.5 py-2 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-gray-400 dark:placeholder-slate-600 transition-all duration-200 shadow-sm"
         />
       </div>
     </div>

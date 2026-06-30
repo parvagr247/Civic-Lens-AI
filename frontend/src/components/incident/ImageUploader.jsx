@@ -83,12 +83,12 @@ export default function ImageUploader({ selectedFile, onFileSelect, onFileRemove
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-slate-300 mb-2">
-        Upload Incident Photo <span className="text-emerald-400">*</span>
+      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+        Upload Incident Photo <span className="text-emerald-500 dark:text-emerald-400">*</span>
       </label>
 
       {error && (
-        <div className="flex items-center gap-2 text-sm text-rose-400 bg-rose-950/40 border border-rose-900/60 p-3 rounded-lg mb-3 animate-fade-in">
+        <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 p-3 rounded-lg mb-3 animate-fade-in">
           <AlertCircle size={16} className="shrink-0" />
           <span>{error}</span>
         </div>
@@ -97,10 +97,10 @@ export default function ImageUploader({ selectedFile, onFileSelect, onFileRemove
       <div
         className={`relative group cursor-pointer border-2 border-dashed rounded-xl transition-all duration-300 flex flex-col items-center justify-center p-6 ${
           selectedFile
-            ? 'border-emerald-500/50 bg-emerald-950/10'
+            ? 'border-emerald-500/50 bg-emerald-50/20 dark:bg-emerald-950/10'
             : dragActive
-            ? 'border-emerald-500 bg-emerald-950/20 scale-[0.99]'
-            : 'border-slate-700 bg-slate-900/40 hover:border-slate-600 hover:bg-slate-900/60'
+            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 scale-[0.99]'
+            : 'border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40 hover:border-emerald-500 dark:hover:border-slate-600 hover:bg-gray-100/50 dark:hover:bg-slate-900/60'
         }`}
         onDragEnter={handleDrag}
         onDragOver={handleDrag}
@@ -117,25 +117,30 @@ export default function ImageUploader({ selectedFile, onFileSelect, onFileRemove
         />
 
         {selectedFile ? (
-          <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-slate-700 aspect-video flex items-center justify-center bg-slate-950">
+          <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700 aspect-video flex items-center justify-center bg-gray-100 dark:bg-slate-950">
             {hasLoadError ? (
-              <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400 bg-slate-900 w-full h-full rounded-lg">
+              <div className="flex flex-col items-center justify-center p-6 text-center text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-900 w-full h-full rounded-lg">
                 <AlertCircle size={24} className="text-rose-500 mb-2" />
                 <span className="text-xs font-bold">Failed to load preview</span>
-                <span className="text-[10px] text-slate-500 mt-1">Please try another image file</span>
+                <span className="text-[10px] text-gray-400 dark:text-slate-500 mt-1">Please try another image file</span>
               </div>
             ) : (
               <img
                 src={previewUrl}
                 alt="Preview"
                 className="max-w-full max-h-full object-contain"
-                onError={() => setHasLoadError(true)}
+                onError={(e) => {
+                  // Only trigger error state if the source matches our current active preview URL
+                  if (previewUrl && e.target.src === previewUrl) {
+                    setHasLoadError(true);
+                  }
+                }}
               />
             )}
             <button
               type="button"
               onClick={handleRemove}
-              className="absolute top-2 right-2 p-1.5 bg-slate-950/80 hover:bg-rose-600 text-slate-300 hover:text-white rounded-full transition-all duration-200"
+              className="absolute top-2 right-2 p-1.5 bg-gray-900/80 dark:bg-slate-950/80 hover:bg-rose-600 text-white dark:text-slate-300 rounded-full transition-all duration-200"
               title="Remove Image"
             >
               <XCircle size={18} />
@@ -143,13 +148,13 @@ export default function ImageUploader({ selectedFile, onFileSelect, onFileRemove
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center">
-            <div className="p-3 bg-slate-800/60 rounded-full text-slate-400 group-hover:text-slate-300 group-hover:scale-105 transition-all duration-300 mb-3">
+            <div className="p-3 bg-gray-200/50 dark:bg-slate-800/60 rounded-full text-gray-500 dark:text-slate-400 group-hover:text-emerald-500 dark:group-hover:text-slate-300 group-hover:scale-105 transition-all duration-300 mb-3">
               <UploadCloud size={28} />
             </div>
-            <p className="text-slate-300 font-medium mb-1">
-              Drag & drop your image here, or <span className="text-emerald-400 hover:underline">browse</span>
+            <p className="text-gray-700 dark:text-slate-300 font-medium mb-1">
+              Drag & drop your image here, or <span className="text-emerald-600 dark:text-emerald-400 hover:underline">browse</span>
             </p>
-            <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+            <p className="text-xs text-gray-500 dark:text-slate-500 flex items-center gap-1 mt-1">
               <ImageIcon size={12} />
               Supports JPG, JPEG, PNG, WEBP (Max 10MB)
             </p>
