@@ -39,7 +39,7 @@ app:
   allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:3026,http://127.0.0.1:3026}
   # Firebase Configuration Details
   firebase:
-  project-id: ${FIREBASE_PROJECT_ID:civiclens-prod-storage}
+    project-id: ${FIREBASE_PROJECT_ID:civiclens-prod-storage}
     database-url: ${FIREBASE_DATABASE_URL:}
     storage-bucket: ${FIREBASE_STORAGE_BUCKET:civiclens-prod-storage.firebasestorage.app}
 
