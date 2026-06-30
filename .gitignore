@@ -21,3 +21,4 @@ firebase-service-account.json
 .vscode/
 .DS_Store
 .env.example
+.env.example
