@@ -8,7 +8,7 @@ import { useToast } from '../components/ui/ToastProvider';
 import { 
   Loader2, CheckCircle, FileText, MapPin, Calendar, 
   Eye, Shield, Clock, Zap, AlertCircle, AlertTriangle, 
-  ArrowRight, Edit3, Search, User, Bell, Activity
+  ArrowRight, Edit3, Search, User, Bell, Activity, Circle
 } from 'lucide-react';
 
 /**
