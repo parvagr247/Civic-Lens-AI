@@ -61,12 +61,13 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh '''
+                        VITE_KEY=$(grep VITE_GOOGLE_MAPS_API_KEY ../.env | cut -d '=' -f2- || echo "")
                         if docker buildx version >/dev/null 2>&1; then
                             echo "Docker Buildx is available. Building Frontend with BuildKit..."
-                            DOCKER_BUILDKIT=1 docker build -t ${DOCKER_IMAGE_FRONTEND}:stable .
+                            DOCKER_BUILDKIT=1 docker build --build-arg VITE_GOOGLE_MAPS_API_KEY="$VITE_KEY" -t ${DOCKER_IMAGE_FRONTEND}:stable .
                         else
                             echo "Docker Buildx is NOT available. Building Frontend with legacy builder..."
-                            DOCKER_BUILDKIT=0 docker build -t ${DOCKER_IMAGE_FRONTEND}:stable .
+                            DOCKER_BUILDKIT=0 docker build --build-arg VITE_GOOGLE_MAPS_API_KEY="$VITE_KEY" -t ${DOCKER_IMAGE_FRONTEND}:stable .
                         fi
                     '''
                 }

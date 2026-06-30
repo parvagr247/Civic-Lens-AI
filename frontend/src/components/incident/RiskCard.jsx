@@ -6,6 +6,7 @@ import UrgencyBadge from './UrgencyBadge';
 import ConfidenceIndicator from './ConfidenceIndicator';
 import { reanalyzeRisk } from '../../services/riskService';
 import { Button } from '../ui/Button';
+import '../../styles/dashboard/RiskDashboard.css';
 
 /**
  * RiskCard component.
@@ -37,17 +38,17 @@ export default function RiskCard({ risk, onReanalyzeUpdate }) {
   };
 
   return (
-    <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-xl p-6 shadow-xl space-y-6">
+    <div className="risk-card rounded-xl p-6 shadow-lg space-y-6">
       
       {/* Header and Re-Analyze Action */}
-      <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+      <div className="flex justify-between items-center border-b border-border pb-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-emerald-950/40 border border-emerald-900/60 text-emerald-400 rounded-lg">
+          <div className="p-2 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 text-emerald-500 rounded-lg">
             <ShieldCheck size={18} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-200">Risk Assessment Card</h3>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">SLA Dispatch Prioritization</p>
+            <h3 className="text-sm font-bold text-foreground">Risk Assessment Card</h3>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">SLA Dispatch Prioritization</p>
           </div>
         </div>
 
@@ -57,7 +58,7 @@ export default function RiskCard({ risk, onReanalyzeUpdate }) {
           size="sm"
           onClick={handleReanalyze}
           disabled={reanalyzing}
-          className="flex items-center gap-1.5 text-xs py-1.5 px-3 border-slate-700 hover:border-slate-650"
+          className="flex items-center gap-1.5 text-xs py-1.5 px-3 border-border hover:border-emerald-500/30"
         >
           {reanalyzing ? (
             <>
@@ -66,7 +67,7 @@ export default function RiskCard({ risk, onReanalyzeUpdate }) {
             </>
           ) : (
             <>
-              <Sparkles size={12} className="text-emerald-400" />
+              <Sparkles size={12} className="text-emerald-500" />
               Re-Analyze
             </>
           )}
@@ -87,32 +88,32 @@ export default function RiskCard({ risk, onReanalyzeUpdate }) {
           {/* Status Badges */}
           <div className="flex flex-wrap gap-2.5">
             <div className="space-y-1">
-              <span className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Severity</span>
+              <span className="block text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Severity</span>
               <SeverityBadge severity={risk.severity} />
             </div>
             <div className="space-y-1">
-              <span className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Urgency</span>
+              <span className="block text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Urgency</span>
               <UrgencyBadge urgency={risk.urgency} />
             </div>
             <div className="space-y-1">
-              <span className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">SLA Priority</span>
-              <span className="inline-flex px-3 py-1 bg-slate-950/60 border border-slate-800 rounded-full text-xs font-black text-white">
+              <span className="block text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">SLA Priority</span>
+              <span className="inline-flex px-3 py-1 bg-gray-150 dark:bg-slate-900 border border-border rounded-full text-xs font-black text-foreground">
                 {risk.priority || 'P3'}
               </span>
             </div>
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-4 border-t border-b border-slate-800/80 py-4">
+          <div className="grid grid-cols-2 gap-4 border-t border-b border-border py-4">
             
             {/* Affected population */}
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-slate-950/40 rounded-lg text-slate-400">
+              <div className="p-2 bg-gray-50/50 dark:bg-slate-950/20 rounded-lg text-muted-foreground">
                 <Users size={16} />
               </div>
               <div>
-                <span className="block text-[10px] text-slate-500 uppercase">Impact Scope</span>
-                <span className="text-xs font-semibold text-slate-200">
+                <span className="block text-[10px] text-muted-foreground uppercase">Impact Scope</span>
+                <span className="text-xs font-semibold text-foreground">
                   ~{risk.affectedPopulation?.toLocaleString() || '100'} Citizens
                 </span>
               </div>
@@ -120,12 +121,12 @@ export default function RiskCard({ risk, onReanalyzeUpdate }) {
 
             {/* Resolution Deadline */}
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-slate-950/40 rounded-lg text-slate-400">
+              <div className="p-2 bg-gray-50/50 dark:bg-slate-955/20 rounded-lg text-muted-foreground">
                 <Clock size={16} />
               </div>
               <div>
-                <span className="block text-[10px] text-slate-500 uppercase">SLA Target</span>
-                <span className="text-xs font-semibold text-slate-200">
+                <span className="block text-[10px] text-muted-foreground uppercase">SLA Target</span>
+                <span className="text-xs font-semibold text-foreground">
                   {risk.estimatedResolutionTime || '3 Days'}
                 </span>
               </div>
@@ -135,16 +136,16 @@ export default function RiskCard({ risk, onReanalyzeUpdate }) {
 
           {/* Target Departments */}
           <div className="flex items-start gap-2.5">
-            <div className="p-2 bg-slate-950/40 rounded-lg text-slate-400 mt-0.5">
+            <div className="p-2 bg-gray-50/50 dark:bg-slate-950/20 rounded-lg text-muted-foreground mt-0.5">
               <Building size={16} />
             </div>
             <div className="space-y-1">
-              <span className="block text-[10px] text-slate-500 uppercase">Assigned Departments</span>
+              <span className="block text-[10px] text-muted-foreground uppercase">Assigned Departments</span>
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {risk.affectedDepartments?.map((dept, idx) => (
                   <span 
                     key={idx} 
-                    className="text-[10px] font-semibold text-slate-350 bg-slate-950/30 border border-slate-850/65 px-2.5 py-0.5 rounded"
+                    className="risk-chip text-[10px] font-semibold px-2.5 py-0.5 rounded"
                   >
                     {dept}
                   </span>

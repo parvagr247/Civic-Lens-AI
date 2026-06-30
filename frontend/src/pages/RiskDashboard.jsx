@@ -14,6 +14,7 @@ import SeverityBadge from '../components/incident/SeverityBadge';
 import UrgencyBadge from '../components/incident/UrgencyBadge';
 import { Loader2, TrendingUp, AlertTriangle, ShieldCheck, FileText, ArrowRight, RefreshCw } from 'lucide-react';
 import { useToast } from '../components/ui/ToastProvider';
+import '../styles/dashboard/RiskDashboard.css';
 
 /**
  * RiskDashboard page.
@@ -119,7 +120,7 @@ export default function RiskDashboard() {
         <button
           type="button"
           onClick={fetchDashboardData}
-          className="p-2.5 bg-white border border-slate-200 text-slate-500 hover:text-slate-800 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-350 dark:hover:text-white rounded-lg transition-colors duration-200"
+          className="p-2.5 bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors duration-200"
         >
           <RefreshCw size={16} />
         </button>
@@ -130,48 +131,48 @@ export default function RiskDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Average Risk */}
-          <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400 rounded-xl">
+          <Card className="p-4 flex items-center gap-4 shadow-sm">
+            <div className="p-3 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 text-emerald-500 rounded-xl">
               <TrendingUp size={22} />
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">Average Risk Index</span>
-              <span className="text-2xl font-black text-slate-900 dark:text-white">{Math.round(stats.averageRiskScore || 0)}</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold block">Average Risk Index</span>
+              <span className="text-2xl font-black text-foreground">{Math.round(stats.averageRiskScore || 0)}</span>
             </div>
           </Card>
 
           {/* Critical Threats */}
-          <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 rounded-xl">
+          <Card className="p-4 flex items-center gap-4 shadow-sm">
+            <div className="p-3 bg-rose-500/10 dark:bg-rose-500/20 border border-rose-500/20 text-rose-500 rounded-xl">
               <AlertTriangle size={22} />
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">Critical Threats</span>
-              <span className="text-2xl font-black text-slate-900 dark:text-white">{stats.criticalThreatCount || 0}</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold block">Critical Threats</span>
+              <span className="text-2xl font-black text-foreground">{stats.criticalThreatCount || 0}</span>
             </div>
           </Card>
 
           {/* High Priority (P1/P2) */}
-          <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
-            <div className="p-3 bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-900/60 text-orange-600 dark:text-orange-400 rounded-xl">
+          <Card className="p-4 flex items-center gap-4 shadow-sm">
+            <div className="p-3 bg-orange-500/10 dark:bg-orange-500/20 border border-orange-500/20 text-orange-500 rounded-xl">
               <ShieldCheck size={22} />
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">P1/P2 Actions</span>
-              <span className="text-2xl font-black text-slate-900 dark:text-white">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold block">P1/P2 Actions</span>
+              <span className="text-2xl font-black text-foreground">
                 {((stats.priorityDistribution?.P1 || 0) + (stats.priorityDistribution?.P2 || 0))}
               </span>
             </div>
           </Card>
 
           {/* Total reports assessed */}
-          <Card className="p-4 bg-white dark:bg-slate-900/30 border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
-            <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 text-blue-600 dark:text-blue-400 rounded-xl">
+          <Card className="p-4 flex items-center gap-4 shadow-sm">
+            <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 text-blue-500 rounded-xl">
               <FileText size={22} />
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">Total Risk Scans</span>
-              <span className="text-2xl font-black text-slate-900 dark:text-white">{stats.totalAssessedCount || 0}</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold block">Total Risk Scans</span>
+              <span className="text-2xl font-black text-foreground">{stats.totalAssessedCount || 0}</span>
             </div>
           </Card>
 
@@ -183,13 +184,13 @@ export default function RiskDashboard() {
         
         {/* Left Column: High Risk incidents list */}
         <div className="lg:col-span-5 h-[600px] flex">
-          <div className="w-full bg-white dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col h-full">
-            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 shrink-0">
+          <div className="w-full bg-card border border-border rounded-xl p-4 shadow-sm flex flex-col h-full">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 shrink-0">
               High Risk Incidents (Score ≥ 60)
             </h3>
             
             {highRiskList.length === 0 ? (
-              <p className="text-slate-550 text-xs text-center flex-1 flex items-center justify-center">No high-risk threats detected currently.</p>
+              <p className="text-muted-foreground text-xs text-center flex-1 flex items-center justify-center">No high-risk threats detected currently.</p>
             ) : (
               <div className="space-y-2.5 overflow-y-auto pr-1 flex-1 scrollbar-thin">
                 {highRiskList.map((item) => {
@@ -200,26 +201,26 @@ export default function RiskDashboard() {
                       onClick={() => handleSelectRisk(item)}
                       className={`p-3.5 border rounded-xl cursor-pointer transition-all duration-200 flex items-start justify-between gap-3 ${
                         isSelected
-                          ? 'bg-slate-100 dark:bg-slate-850/60 border-emerald-500/50 shadow-md'
-                          : 'bg-slate-50 dark:bg-slate-955/20 border-slate-150 dark:border-slate-850 hover:border-slate-350 dark:hover:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-900/30'
+                          ? 'bg-gray-100/50 dark:bg-slate-900/50 border-emerald-500/50 shadow-md'
+                          : 'bg-gray-50/30 dark:bg-slate-950/20 border-border hover:border-emerald-500/30 hover:bg-gray-100/50 dark:hover:bg-slate-900/20'
                       }`}
                     >
                       <div className="space-y-1.5 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${getThreatColor(item.threatLevel)}`} />
-                          <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{item.incidentTitle}</h4>
+                          <h4 className="text-xs font-semibold text-foreground truncate">{item.incidentTitle}</h4>
                         </div>
-                        <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+                        <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
                           <SeverityBadge severity={item.severity} />
                           <UrgencyBadge urgency={item.urgency} />
                         </div>
-                        <p className="text-[10px] text-slate-550 truncate">{item.incidentAddress}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{item.incidentAddress}</p>
                       </div>
 
                       {/* Score circle */}
                       <div className="flex flex-col items-end shrink-0">
-                        <span className="text-lg font-black text-slate-900 dark:text-white">{item.overallRiskScore}</span>
-                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Index</span>
+                        <span className="text-lg font-black text-foreground">{item.overallRiskScore}</span>
+                        <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-wider">Index</span>
                       </div>
                     </div>
                   );
@@ -227,20 +228,18 @@ export default function RiskDashboard() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Right Column: Split Detail screen */}
+        </div>        {/* Right Column: Split Detail screen */}
         <div className="lg:col-span-7 h-[600px] flex">
           {loadingDetails ? (
-            <div className="w-full flex flex-col items-center justify-center p-12 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/10 h-full gap-2.5">
+            <div className="w-full flex flex-col items-center justify-center p-12 border border-dashed border-border rounded-xl bg-muted/20 h-full gap-2.5">
               <Loader2 size={24} className="animate-spin text-emerald-400" />
-              <span className="text-xs text-slate-500 dark:text-slate-400">Fetching incident profiles...</span>
+              <span className="text-xs text-muted-foreground">Fetching incident profiles...</span>
             </div>
           ) : selectedRisk && selectedIncident ? (
-            <div className="w-full bg-white dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm flex flex-col h-full overflow-hidden justify-between">
+            <div className="w-full bg-card border border-border rounded-xl p-5 shadow-sm flex flex-col h-full overflow-hidden justify-between">
               
               {/* Tab Selector */}
-              <div className="flex border-b border-slate-200 dark:border-slate-800 gap-1 pb-px overflow-x-auto scrollbar-none shrink-0 mb-4">
+              <div className="flex border-b border-border gap-1 pb-px overflow-x-auto scrollbar-none shrink-0 mb-4">
                 {[
                   { id: 'risk-metrics', label: 'Risk Metrics' },
                   { id: 'ai-analysis', label: 'AI Analysis' },
@@ -254,7 +253,7 @@ export default function RiskDashboard() {
                     className={`px-4 py-2 text-xs font-bold border-b-2 transition-all duration-200 whitespace-nowrap ${
                       activeDetailsTab === tab.id
                         ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                        : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     {tab.label}
@@ -292,9 +291,9 @@ export default function RiskDashboard() {
                     <RecommendationPanel recommendations={selectedRisk.recommendations} />
 
                     {/* Collapsible original diagnostics card */}
-                    <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-slate-900/10">
-                      <div className="bg-slate-50 dark:bg-slate-900/50 p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-                        <span className="text-xs font-bold text-slate-500 dark:text-slate-350 uppercase tracking-widest flex items-center gap-2">
+                    <div className="border border-border rounded-xl overflow-hidden shadow-sm bg-card">
+                      <div className="bg-gray-50/50 dark:bg-slate-950/20 p-4 border-b border-border flex justify-between items-center">
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                           <FileText size={14} className="text-emerald-500 dark:text-emerald-400" />
                           Reference Diagnostics Report
                         </span>
@@ -309,7 +308,7 @@ export default function RiskDashboard() {
 
             </div>
           ) : (
-            <div className="w-full flex flex-col items-center justify-center p-12 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/10 h-full text-slate-500 text-xs">
+            <div className="w-full flex flex-col items-center justify-center p-12 border border-dashed border-border rounded-xl bg-muted/20 h-full text-muted-foreground text-xs">
               Select an incident from the high-risk panel to view details.
             </div>
           )}

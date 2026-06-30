@@ -577,21 +577,21 @@ export default function ReportDetails() {
                   </h4>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="p-3 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-150 dark:border-slate-900">
-                      <span className="text-[9px] text-slate-400 uppercase tracking-wider block font-bold">Physical Address</span>
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1 block leading-tight">
+                    <div className="p-3 bg-gray-50/50 dark:bg-slate-950/30 rounded-xl border border-border shadow-sm">
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider block font-bold">Physical Address</span>
+                      <span className="text-xs font-bold text-foreground mt-1 block leading-tight">
                         {incident.location?.address || 'Unavailable'}
                       </span>
                     </div>
-                    <div className="p-3 bg-slate-50 dark:bg-slate-955/40 rounded-xl border border-slate-150 dark:border-slate-900">
-                      <span className="text-[9px] text-slate-400 uppercase tracking-wider block font-bold">Latitude</span>
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1 block font-mono">
+                    <div className="p-3 bg-gray-50/50 dark:bg-slate-950/30 rounded-xl border border-border shadow-sm">
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider block font-bold">Latitude</span>
+                      <span className="text-xs font-bold text-foreground mt-1 block font-mono">
                         {incident.location?.latitude || 'N/A'}
                       </span>
                     </div>
-                    <div className="p-3 bg-slate-50 dark:bg-slate-955/40 rounded-xl border border-slate-150 dark:border-slate-900">
-                      <span className="text-[9px] text-slate-400 uppercase tracking-wider block font-bold">Longitude</span>
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1 block font-mono">
+                    <div className="p-3 bg-gray-50/50 dark:bg-slate-950/30 rounded-xl border border-border shadow-sm">
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider block font-bold">Longitude</span>
+                      <span className="text-xs font-bold text-foreground mt-1 block font-mono">
                         {incident.location?.longitude || 'N/A'}
                       </span>
                     </div>
@@ -671,19 +671,19 @@ export default function ReportDetails() {
                     <div className="space-y-4">
                       {/* Grid Properties */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-[10px] font-semibold">
-                        <div className="p-3 bg-slate-50 dark:bg-slate-950/30 rounded-xl border border-slate-150 dark:border-slate-900 space-y-1">
-                          <span className="text-[9px] text-slate-500 block font-bold">Detected Category</span>
-                          <span className="font-extrabold text-slate-800 dark:text-slate-200 block text-xs">{incident?.category}</span>
+                        <div className="p-3 bg-gray-50/50 dark:bg-slate-950/30 rounded-xl border border-border space-y-1 shadow-sm">
+                          <span className="text-[9px] text-muted-foreground block font-bold">Detected Category</span>
+                          <span className="font-extrabold text-foreground block text-xs">{incident?.category}</span>
                         </div>
-                        <div className="p-3 bg-slate-50 dark:bg-slate-950/30 rounded-xl border border-slate-150 dark:border-slate-900 space-y-1">
-                          <span className="text-[9px] text-slate-500 block font-bold">Suggested Department</span>
-                          <span className="font-extrabold text-slate-800 dark:text-slate-200 block text-xs">{incident?.assignedDepartment || 'Public Works'}</span>
+                        <div className="p-3 bg-gray-50/50 dark:bg-slate-950/30 rounded-xl border border-border space-y-1 shadow-sm">
+                          <span className="text-[9px] text-muted-foreground block font-bold">Suggested Department</span>
+                          <span className="font-extrabold text-foreground block text-xs">{incident?.assignedDepartment || 'Public Works'}</span>
                         </div>
-                        <div className="p-3 bg-slate-50 dark:bg-slate-950/30 rounded-xl border border-slate-150 dark:border-slate-900 space-y-1">
-                          <span className="text-[9px] text-slate-500 block font-bold">Confidence Score</span>
+                        <div className="p-3 bg-gray-50/50 dark:bg-slate-950/30 rounded-xl border border-border space-y-1 shadow-sm">
+                          <span className="text-[9px] text-muted-foreground block font-bold">Confidence Score</span>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="font-extrabold text-slate-800 dark:text-slate-200 text-xs">{Math.round((analysis.confidence || 0.94) * 100)}%</span>
-                            <div className="h-1.5 w-16 bg-slate-200 dark:bg-slate-850 rounded-full overflow-hidden shrink-0">
+                            <span className="font-extrabold text-foreground text-xs">{Math.round((analysis.confidence || 0.94) * 100)}%</span>
+                            <div className="h-1.5 w-16 bg-gray-200 dark:bg-slate-800 rounded-full overflow-hidden shrink-0">
                               <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.round((analysis.confidence || 0.94) * 100)}%` }} />
                             </div>
                           </div>
@@ -691,18 +691,18 @@ export default function ReportDetails() {
                       </div>
 
                       {/* Explanation */}
-                      <div className="p-4 bg-slate-50 dark:bg-slate-950/20 border border-slate-150 dark:border-slate-900 rounded-xl space-y-1 text-xs">
-                        <span className="text-[9px] text-slate-450 block font-bold uppercase tracking-wider">AI Explanation</span>
-                        <p className="text-slate-655 dark:text-slate-350 leading-relaxed italic">"{analysis.summary}"</p>
+                      <div className="p-4 bg-gray-50/30 dark:bg-slate-950/20 border border-border rounded-xl space-y-1 text-xs">
+                        <span className="text-[9px] text-muted-foreground block font-bold uppercase tracking-wider">AI Explanation</span>
+                        <p className="text-gray-750 dark:text-slate-350 leading-relaxed italic">"{analysis.summary}"</p>
                       </div>
 
                       {/* Observed damages chips */}
                       {analysis.observedDamages && analysis.observedDamages.length > 0 && (
                         <div className="space-y-1.5 text-xs">
-                          <span className="text-[9px] text-slate-450 block font-bold uppercase tracking-wider">Affected Infrastructure</span>
+                          <span className="text-[9px] text-muted-foreground block font-bold uppercase tracking-wider">Affected Infrastructure</span>
                           <div className="flex flex-wrap gap-1.5 pt-0.5">
                             {analysis.observedDamages.map((dmg, idx) => (
-                              <span key={idx} className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 text-[10px] font-bold">
+                              <span key={idx} className="px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-border text-[10px] font-bold">
                                 {dmg}
                               </span>
                             ))}

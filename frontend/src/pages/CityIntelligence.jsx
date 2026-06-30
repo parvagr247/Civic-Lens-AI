@@ -1,85 +1,251 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import { Map, MapPin, Eye, BarChart4, TrendingUp, Info } from 'lucide-react';
+import { Map as MapIcon, MapPin, Eye, BarChart4, TrendingUp, Info, ShieldAlert, Sparkles, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useToast } from '../components/ui/ToastProvider';
+import { getAllIncidents } from '../services/issueService';
 
-const CityIntelligence = () => {
+// Map components
+import GoogleMapContainer from '../components/map/GoogleMapContainer';
+import MapFilters from '../components/map/MapFilters';
+import LocationSearch from '../components/map/LocationSearch';
+import CurrentLocationButton from '../components/map/CurrentLocationButton';
+
+export default function CityIntelligence() {
   const { toast } = useToast();
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-  const zones = [
-    { name: 'Zone A (North District)', reports: 12, status: 'Stable', risk: 'medium', hotspots: ['High Street (Potholes)', 'Central Park Gate (Dumping)'] },
-    { name: 'Zone B (Downtown Core)', reports: 24, status: 'Critical', risk: 'high', hotspots: ['Broadway Avenue (Pipeline leakage)', '5th Cross (Street light out)'] },
-    { name: 'Zone C (West Ward)', reports: 6, status: 'Optimal', risk: 'low', hotspots: ['Subway junction (Flooding)'] },
-  ];
+  // Data states
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [viewMode, setViewMode] = useState('marker'); // 'marker' or 'heatmap'
+
+  // Map states
+  const [cameraState, setCameraState] = useState({
+    center: { lat: 26.9124, lng: 75.7873 }, // Default to Jaipur
+    zoom: 12
+  });
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationWarning, setLocationWarning] = useState(null);
+
+  const fetchIncidents = async () => {
+    setLoading(true);
+    try {
+      const res = await getAllIncidents();
+      if (res.success && res.data) {
+        setIncidents(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch incidents:', err);
+      toast('Failed to load incident reports.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchIncidents();
+
+    // Try to get browser location on mount if possible
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const loc = { lat: position.coords.latitude, lng: position.coords.longitude };
+          setUserLocation(loc);
+          setCameraState({ center: loc, zoom: 12 });
+        },
+        (err) => {
+          console.log('Initial geolocation block/error (expected on HTTP):', err.message);
+        }
+      );
+    }
+  }, []);
+
+  const handleSearchLocation = (lat, lng, address) => {
+    setCameraState({ center: { lat, lng }, zoom: 14 });
+    toast(`Centering map on: ${address.split(',')[0]}`, 'success');
+  };
+
+  const handleGetLocation = (lat, lng) => {
+    const loc = { lat, lng };
+    setUserLocation(loc);
+    setCameraState({ center: loc, zoom: 14 });
+    setLocationWarning(null);
+    toast('Centered map on your current location.', 'success');
+  };
+
+  const handleLocationBlocked = (warningMessage) => {
+    setLocationWarning(warningMessage);
+    toast('Automatic location access blocked.', 'warning');
+  };
+
+  // Frontend Filtering
+  const filteredIncidents = incidents.filter(r => {
+    if (activeFilter === 'ALL') return true;
+    
+    // Category mapping
+    if (activeFilter === 'ROADS') {
+      return ['ROADS', 'ROAD', 'POTHOLE', 'ROAD_DAMAGE'].includes(r.category?.toUpperCase());
+    }
+    if (activeFilter === 'SANITATION') {
+      return ['SANITATION', 'GARBAGE', 'WASTE'].includes(r.category?.toUpperCase());
+    }
+    if (activeFilter === 'WATER') {
+      return ['WATER', 'WATER_LEAKAGE', 'LEAKAGE'].includes(r.category?.toUpperCase());
+    }
+    if (activeFilter === 'ELECTRICAL') {
+      return ['ELECTRICAL', 'STREET_LIGHT', 'POWER'].includes(r.category?.toUpperCase());
+    }
+    if (activeFilter === 'PARKS') {
+      return ['PARKS', 'PARKS_REC'].includes(r.category?.toUpperCase());
+    }
+
+    // Priorities
+    if (activeFilter === 'CRITICAL') {
+      const severity = r.priority?.toUpperCase() || r.risk?.severity?.toUpperCase() || '';
+      const threat = r.risk?.threatLevel?.toUpperCase() || '';
+      const score = r.risk?.overallRiskScore || 0;
+      return severity === 'CRITICAL' || threat === 'CRITICAL' || score >= 70;
+    }
+
+    // Statuses
+    if (activeFilter === 'RESOLVED') {
+      return ['RESOLVED', 'CLOSED'].includes(r.status?.toUpperCase());
+    }
+
+    return true;
+  });
+
+  // Hotspot computation
+  const getZoneSummary = () => {
+    const resolved = incidents.filter(r => ['RESOLVED', 'CLOSED'].includes(r.status?.toUpperCase())).length;
+    const critical = incidents.filter(r => {
+      const severity = r.priority?.toUpperCase() || r.risk?.severity?.toUpperCase() || '';
+      const score = r.risk?.overallRiskScore || 0;
+      return severity === 'CRITICAL' || score >= 70;
+    }).length;
+
+    return {
+      total: incidents.length,
+      active: incidents.length - resolved,
+      resolved,
+      critical
+    };
+  };
+
+  const summary = getZoneSummary();
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="City Intelligence Hub" 
-        subtitle="Geospatial distribution, hot zones mapping, and priority action lists."
-      >
-        <Button onClick={() => toast('Refreshed city intelligence data.', 'info')} variant="outline" size="sm" icon={TrendingUp}>
-          Refresh Analytics
-        </Button>
-      </PageHeader>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <PageHeader 
+          title="City Intelligence Hub" 
+          subtitle="Real-time geospatial distribution of active reports, hot zone heatmaps, and priority dispatches."
+        />
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setViewMode(prev => prev === 'marker' ? 'heatmap' : 'marker')}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1.5 border-border hover:bg-muted text-xs font-bold"
+          >
+            <Sparkles size={14} className="text-emerald-500" />
+            <span>Switch to {viewMode === 'marker' ? 'Heatmap' : 'Pins'}</span>
+          </Button>
+          <Button 
+            onClick={fetchIncidents} 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1.5 border-border hover:bg-muted text-xs font-bold"
+          >
+            <RefreshCw size={14} />
+            <span>Refresh Map</span>
+          </Button>
+        </div>
+      </div>
 
-      {/* Map visualization placeholder */}
-      <Card className="overflow-hidden">
-        <CardHeader className="bg-secondary/15 flex flex-row items-center justify-between">
+      {/* KPI Counters */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="p-4 flex flex-col justify-between shadow-sm">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Total Reports</span>
+          <span className="text-2xl font-black text-foreground mt-2">{summary.total}</span>
+        </Card>
+        <Card className="p-4 flex flex-col justify-between shadow-sm">
+          <span className="text-[10px] text-rose-500 uppercase tracking-widest font-bold">Active Threats</span>
+          <span className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-2">{summary.active}</span>
+        </Card>
+        <Card className="p-4 flex flex-col justify-between shadow-sm">
+          <span className="text-[10px] text-amber-500 uppercase tracking-widest font-bold">Critical Priority</span>
+          <span className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-2">{summary.critical}</span>
+        </Card>
+        <Card className="p-4 flex flex-col justify-between shadow-sm">
+          <span className="text-[10px] text-emerald-500 uppercase tracking-widest font-bold">Resolved Cases</span>
+          <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-2">{summary.resolved}</span>
+        </Card>
+      </div>
+
+      {/* Geolocation & Search Controls */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-card border border-border p-4 rounded-2xl shadow-sm">
+        <LocationSearch onSearchLocation={handleSearchLocation} apiKey={apiKey} />
+        <CurrentLocationButton 
+          onGetLocation={handleGetLocation} 
+          onLocationBlocked={handleLocationBlocked} 
+        />
+      </div>
+
+      {/* Location Access HTTPS Warning Box */}
+      {locationWarning && (
+        <div className="flex gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-600 dark:text-amber-400 animate-scale-in">
+          <Info size={16} className="shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <span className="font-bold">Insecure Geolocation Warning</span>
+            <p className="opacity-90 leading-relaxed">
+              {locationWarning} You can still manually search and navigate to any address using the search bar above.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Filter Chips */}
+      <div className="space-y-2">
+        <span className="text-[9px] text-muted-foreground uppercase tracking-wider block font-bold">Operational Filter Layers</span>
+        <MapFilters activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+      </div>
+
+      {/* Live Google Map Container */}
+      <Card className="overflow-hidden h-[500px] flex flex-col border border-border shadow-md">
+        <CardHeader className="bg-gray-50/50 dark:bg-slate-950/20 border-b border-border py-4 px-6 flex flex-row items-center justify-between shrink-0">
           <div>
-            <CardTitle>Geospatial Incident Map</CardTitle>
-            <CardDescription>Visual distribution of active municipal reports across districts.</CardDescription>
+            <CardTitle className="text-sm font-bold text-foreground">Operational Geographic View</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">Showing {filteredIncidents.length} filtered incident dispatches on operational grid.</CardDescription>
           </div>
-          <Map className="w-6 h-6 text-primary" />
+          <MapIcon className="w-5 h-5 text-emerald-500" />
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="h-[300px] bg-secondary/20 flex flex-col items-center justify-center text-center relative p-6">
-            {/* Mock map lines */}
-            <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px]" />
-            <div className="z-10 space-y-3">
-              <MapPin className="w-12 h-12 text-primary mx-auto animate-bounce" />
-              <h4 className="font-semibold text-foreground">Interactive Google Map Integration</h4>
-              <p className="text-xs text-muted-foreground max-w-sm">Day 1 Mock Layout. Future integrations will overlay Firestore location entries with custom risk pins.</p>
-              <Button size="sm" onClick={() => toast('Google Maps authorization placeholder.', 'info')}>
-                Authorize Map Client
-              </Button>
+        <CardContent className="p-0 flex-1 relative min-h-0">
+          {!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY' ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-muted/20 gap-3">
+              <AlertTriangle className="w-12 h-12 text-amber-500 animate-pulse" />
+              <h4 className="font-bold text-foreground text-sm">Google Maps API Key Missing</h4>
+              <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
+                Add your Maps API Key as <code>VITE_GOOGLE_MAPS_API_KEY</code> inside the <code>frontend/.env</code> configuration file to load the live Operational Geographic Map.
+              </p>
             </div>
-          </div>
+          ) : (
+            <GoogleMapContainer 
+              apiKey={apiKey} 
+              incidents={filteredIncidents} 
+              userLocation={userLocation}
+              cameraState={cameraState}
+              onCameraChange={setCameraState}
+              viewMode={viewMode}
+            />
+          )}
         </CardContent>
       </Card>
-
-      {/* Zone Analytics Cards */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {zones.map((zone) => (
-          <Card key={zone.name}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-sm text-foreground">{zone.name}</span>
-                <Badge variant={zone.risk}>{zone.status}</Badge>
-              </div>
-              <CardDescription>{zone.reports} active incidents logged</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-1">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Hotspots Identified</span>
-                <ul className="text-xs space-y-1.5 text-muted-foreground">
-                  {zone.hotspots.map((spot, idx) => (
-                    <li key={idx} className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                      <span>{spot}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
     </div>
   );
-};
-
-export default CityIntelligence;
+}

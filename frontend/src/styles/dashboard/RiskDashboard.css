@@ -1,0 +1,106 @@
+/* Municipal Risk Intelligence Dashboard Styles */
+
+.risk-card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  color: var(--card-foreground);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.risk-card:hover {
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05), 0 0 25px -5px rgba(16, 185, 129, 0.02);
+}
+
+.risk-accent-bg {
+  background-color: rgba(247, 249, 252, 0.8);
+  border: 1px solid var(--border);
+}
+
+.dark .risk-accent-bg {
+  background-color: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.risk-chip {
+  background-color: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.dark .risk-chip {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+}
+
+/* Timeline Components */
+.timeline-stepper {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.timeline-node {
+  background-color: var(--card);
+  border: 2px solid var(--border);
+}
+
+.timeline-node.completed {
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+/* Impact Indicators */
+.impact-safety-card {
+  color: #e11d48;
+  border-color: rgba(225, 29, 72, 0.15);
+  background-color: rgba(225, 29, 72, 0.03);
+}
+
+.dark .impact-safety-card {
+  color: #fda4af;
+  border-color: rgba(244, 63, 94, 0.2);
+  background-color: rgba(244, 63, 94, 0.05);
+}
+
+.impact-infra-card {
+  color: #d97706;
+  border-color: rgba(217, 119, 6, 0.15);
+  background-color: rgba(217, 119, 6, 0.03);
+}
+
+.dark .impact-infra-card {
+  color: #fcd34d;
+  border-color: rgba(251, 191, 36, 0.2);
+  background-color: rgba(251, 191, 36, 0.05);
+}
+
+.impact-env-card {
+  color: #059669;
+  border-color: rgba(5, 150, 105, 0.15);
+  background-color: rgba(5, 150, 105, 0.03);
+}
+
+.dark .impact-env-card {
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.2);
+  background-color: rgba(52, 211, 153, 0.05);
+}
+
+.impact-access-card {
+  color: #2563eb;
+  border-color: rgba(37, 99, 235, 0.15);
+  background-color: rgba(37, 99, 235, 0.03);
+}
+
+.dark .impact-access-card {
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.2);
+  background-color: rgba(96, 165, 250, 0.05);
+}
+
+.escalation-hazard-card {
+  color: #e11d48;
+  border-color: rgba(225, 29, 72, 0.2);
+  background-color: rgba(225, 29, 72, 0.05);
+}

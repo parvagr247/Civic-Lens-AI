@@ -3,10 +3,10 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export const Card = React.forwardRef(({ className, ...props }, ref) => {
-  // Strip hardcoded dark background and border overrides to preserve dynamic theme tokens
+  // Strip hardcoded background and border overrides to preserve dynamic theme tokens
   const cleanClassName = className
-    ?.replace(/\bbg-slate-\S+/g, '')
-    ?.replace(/\bborder-slate-\S+/g, '');
+    ?.replace(/(?:dark:)?bg-(?:slate|white|gray|card)\S*/g, '')
+    ?.replace(/(?:dark:)?border-(?:slate|gray|border)\S*/g, '');
 
   return (
     <div

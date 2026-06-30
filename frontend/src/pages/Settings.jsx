@@ -1,3 +1,4 @@
+import '../styles/dashboard/Settings.css';
 import React, { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -225,7 +226,7 @@ export default function Settings() {
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-slate-950/30 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:border-emerald-500/50 focus:outline-none"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   />
                 </div>
 
@@ -235,7 +236,7 @@ export default function Settings() {
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full bg-slate-950/30 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:border-emerald-500/50 focus:outline-none"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   />
                 </div>
 
@@ -246,7 +247,7 @@ export default function Settings() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="flex-1 bg-slate-950/30 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:border-emerald-500/50 focus:outline-none font-medium"
+                      className="flex-1 border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none font-medium"
                     />
                     <Button 
                       onClick={() => handleSave('account')}
@@ -261,17 +262,17 @@ export default function Settings() {
               <div className="border-t border-slate-850 pt-5 space-y-4">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Account Metadata</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl">
+                  <div className="p-3 settings-card">
                     <span className="text-[9px] text-slate-500 block uppercase font-bold">Portal Role</span>
                     <span className="font-extrabold text-slate-300 mt-1 block">
                       {isUserAdmin ? 'System Administrator' : 'Citizen Participant'}
                     </span>
                   </div>
-                  <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl">
+                  <div className="p-3 settings-card">
                     <span className="text-[9px] text-slate-500 block uppercase font-bold">Member Since</span>
                     <span className="font-extrabold text-slate-300 mt-1 block">June 2026</span>
                   </div>
-                  <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl">
+                  <div className="p-3 settings-card">
                     <span className="text-[9px] text-slate-500 block uppercase font-bold">Verification Status</span>
                     <span className="font-extrabold text-emerald-450 mt-1 block flex items-center gap-1">
                       <CheckCircle2 size={12} />
@@ -309,12 +310,12 @@ export default function Settings() {
               </div>
 
               {/* Progress Indicator */}
-              <div className="space-y-1.5 p-4 bg-slate-950/30 border border-slate-850 rounded-xl">
+              <div className="space-y-1.5 p-4 settings-card">
                 <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                   <span className="text-slate-400">Profile Completion</span>
                   <span className="text-emerald-400">{calculateCompletion()}% Completed</span>
                 </div>
-                <div className="h-1.5 w-full bg-slate-850 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-emerald-500 transition-all duration-300"
                     style={{ width: `${calculateCompletion()}%` }}
@@ -326,7 +327,7 @@ export default function Settings() {
                 <img 
                   src={avatarUrl} 
                   alt="Avatar Preview" 
-                  className="w-16 h-16 rounded-2xl border border-slate-850 bg-slate-950 p-1 shrink-0 shadow-lg"
+                  className="w-16 h-16 rounded-2xl border border-border bg-card p-1 shrink-0 shadow-lg"
                 />
                 <div className="space-y-1.5 w-full text-center sm:text-left">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Avatar Seed URL</label>
@@ -335,12 +336,12 @@ export default function Settings() {
                       type="text"
                       value={avatarUrl}
                       onChange={(e) => setAvatarUrl(e.target.value)}
-                      className="flex-1 bg-slate-950/30 border border-slate-850 rounded-xl px-3.5 py-2 text-xs focus:border-emerald-500/50 focus:outline-none"
+                      className="flex-1 border border-border rounded-xl px-3.5 py-2 text-xs focus:outline-none"
                     />
                     <Button 
                       onClick={() => setAvatarUrl(`https://api.dicebear.com/7.x/bottts/svg?seed=${Math.random()}`)}
                       variant="outline"
-                      className="text-xs font-bold py-2 border-slate-800 text-slate-350 hover:bg-slate-850 rounded-xl"
+                      className="text-xs font-bold py-2 border-border text-muted-foreground hover:bg-muted rounded-xl"
                     >
                       Randomize
                     </Button>
@@ -356,7 +357,7 @@ export default function Settings() {
                     onChange={(e) => setProfileBio(e.target.value)}
                     rows={3}
                     placeholder="Tell the community about your civic engagements..."
-                    className="w-full bg-slate-955/30 border border-slate-850 rounded-xl px-3.5 py-2 text-xs focus:border-emerald-500/50 focus:outline-none"
+                    className="w-full border border-border rounded-xl px-3.5 py-2 text-xs focus:outline-none"
                   />
                 </div>
 
@@ -366,7 +367,7 @@ export default function Settings() {
                     type="text"
                     value={profileCity}
                     onChange={(e) => setProfileCity(e.target.value)}
-                    className="w-full bg-slate-950/30 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:border-emerald-500/50 focus:outline-none"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   />
                 </div>
 
@@ -376,7 +377,7 @@ export default function Settings() {
                     type="text"
                     value={profileState}
                     onChange={(e) => setProfileState(e.target.value)}
-                    className="w-full bg-slate-950/30 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:border-emerald-500/50 focus:outline-none"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   />
                 </div>
 
@@ -386,7 +387,7 @@ export default function Settings() {
                     type="text"
                     value={profileCountry}
                     onChange={(e) => setProfileCountry(e.target.value)}
-                    className="w-full bg-slate-950/30 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:border-emerald-500/50 focus:outline-none"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   />
                 </div>
 
@@ -436,7 +437,7 @@ export default function Settings() {
                   { id: 'push', label: 'Push Notifications', desc: 'Send real-time alerts straight to your browser application.', state: notifPush, set: setNotifPush },
                   { id: 'weekly', label: 'Weekly Summary', desc: 'Receive a consolidated summary email of local neighborhood activities.', state: notifWeekly, set: setNotifWeekly }
                 ].map((notifItem) => (
-                  <div key={notifItem.id} className="flex items-start justify-between gap-4 p-3 bg-slate-950/30 border border-slate-850/60 rounded-xl">
+                  <div key={notifItem.id} className="flex items-start justify-between gap-4 p-3 settings-card">
                     <div className="space-y-0.5">
                       <span className="text-xs font-bold text-slate-200 block">{notifItem.label}</span>
                       <span className="text-[10px] text-slate-500 block leading-normal">{notifItem.desc}</span>
@@ -448,7 +449,7 @@ export default function Settings() {
                         onChange={(e) => notifItem.set(e.target.checked)}
                         className="sr-only peer" 
                       />
-                      <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 peer-checked:after:bg-slate-955 peer-checked:after:border-slate-955" />
+                      <div className="w-9 h-5 bg-gray-200 dark:bg-slate-800 rounded-full relative peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] settings-toggle-thumb bg-gray-300 border-gray-300 border rounded-full h-4 w-4 transition-all peer-checked:bg-emerald-500 peer-checked:after:translate-x-full" />
                     </label>
                   </div>
                 ))}
@@ -479,7 +480,7 @@ export default function Settings() {
                   <select
                     value={theme}
                     onChange={(e) => setTheme(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   >
                     <option value="light">Light contrast theme</option>
                     <option value="dark">Sleek dark mode theme</option>
@@ -492,7 +493,7 @@ export default function Settings() {
                   <select
                     value={accentColor}
                     onChange={(e) => setAccentColor(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   >
                     <option value="emerald">Emerald (Default)</option>
                     <option value="blue">Slate Blue</option>
@@ -505,7 +506,7 @@ export default function Settings() {
                   <select
                     value={fontSize}
                     onChange={(e) => setFontSize(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   >
                     <option value="small">Small (11px)</option>
                     <option value="medium">Medium (13px)</option>
@@ -513,7 +514,7 @@ export default function Settings() {
                   </select>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-slate-950/30 border border-slate-850 rounded-xl sm:col-span-2">
+                <div className="flex items-center justify-between p-3 settings-card sm:col-span-2">
                   <div>
                     <span className="text-xs font-bold text-slate-200 block">Compact Layout Mode</span>
                     <span className="text-[10px] text-slate-500 block mt-0.5">Densely list incident tables to reduce page vertical margins.</span>
@@ -525,11 +526,11 @@ export default function Settings() {
                       onChange={(e) => setCompactMode(e.target.checked)}
                       className="sr-only peer" 
                     />
-                    <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 peer-checked:after:bg-slate-955 peer-checked:after:border-slate-955" />
+                    <div className="w-9 h-5 bg-gray-200 dark:bg-slate-800 rounded-full relative peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] settings-toggle-thumb bg-gray-300 border-gray-300 border rounded-full h-4 w-4 transition-all peer-checked:bg-emerald-500 peer-checked:after:translate-x-full" />
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-slate-950/30 border border-slate-850 rounded-xl sm:col-span-2">
+                <div className="flex items-center justify-between p-3 settings-card sm:col-span-2">
                   <div>
                     <span className="text-xs font-bold text-slate-200 block">Reduced Motion</span>
                     <span className="text-[10px] text-slate-500 block mt-0.5">Deactivate structural visual transitions and diagnostic animations.</span>
@@ -541,7 +542,7 @@ export default function Settings() {
                       onChange={(e) => setReducedMotion(e.target.checked)}
                       className="sr-only peer" 
                     />
-                    <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 peer-checked:after:bg-slate-955 peer-checked:after:border-slate-955" />
+                    <div className="w-9 h-5 bg-gray-200 dark:bg-slate-800 rounded-full relative peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] settings-toggle-thumb bg-gray-300 border-gray-300 border rounded-full h-4 w-4 transition-all peer-checked:bg-emerald-500 peer-checked:after:translate-x-full" />
                   </label>
                 </div>
               </div>
@@ -567,11 +568,11 @@ export default function Settings() {
 
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl">
+                  <div className="p-3 settings-card">
                     <span className="text-[9px] text-slate-500 block uppercase font-bold">Password Last Changed</span>
                     <span className="font-extrabold text-slate-300 mt-1 block">34 days ago</span>
                   </div>
-                  <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl">
+                  <div className="p-3 settings-card">
                     <span className="text-[9px] text-slate-500 block uppercase font-bold">Last Login Location</span>
                     <span className="font-extrabold text-slate-300 mt-1 block">Portland, OR (Chrome / Win10)</span>
                   </div>
@@ -581,7 +582,7 @@ export default function Settings() {
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Authorized Sessions</h4>
                   
                   <div className="space-y-2">
-                    <div className="p-3 bg-slate-950/20 border border-slate-850 rounded-xl flex items-center justify-between gap-3 text-xs">
+                    <div className="p-3 settings-box flex items-center justify-between gap-3 text-xs">
                       <div>
                         <span className="block font-bold text-slate-200">Chrome Browser on Windows Desktop</span>
                         <span className="block text-[10px] text-slate-550 mt-0.5">IP: 198.162.1.84 • Active Session</span>
@@ -591,7 +592,7 @@ export default function Settings() {
                       </span>
                     </div>
 
-                    <div className="p-3 bg-slate-950/20 border border-slate-850 rounded-xl flex items-center justify-between gap-3 text-xs">
+                    <div className="p-3 settings-box flex items-center justify-between gap-3 text-xs">
                       <div>
                         <span className="block font-bold text-slate-300">Safari on Apple iPhone 15</span>
                         <span className="block text-[10px] text-slate-550 mt-0.5">IP: 74.125.19.14 • Last Active 2 hours ago</span>
@@ -609,7 +610,7 @@ export default function Settings() {
                     <Button 
                       onClick={() => toast('Signout request sent for all secondary devices.', 'success')}
                       variant="outline"
-                      className="text-xs font-bold py-2 border-slate-800 text-slate-350 hover:bg-slate-850 rounded-xl flex items-center gap-1.5"
+                      className="text-xs font-bold py-2 border-border text-muted-foreground hover:bg-muted rounded-xl flex items-center gap-1.5"
                     >
                       <LogOut size={13} />
                       Sign Out of Other Devices
@@ -618,7 +619,7 @@ export default function Settings() {
                     <Button 
                       onClick={() => toast('Data export bundle initialized. We will email the links shortly.', 'success')}
                       variant="outline"
-                      className="text-xs font-bold py-2 border-slate-800 text-slate-350 hover:bg-slate-850 rounded-xl flex items-center gap-1.5"
+                      className="text-xs font-bold py-2 border-border text-muted-foreground hover:bg-muted rounded-xl flex items-center gap-1.5"
                     >
                       <Download size={13} />
                       Download My Data
@@ -662,7 +663,7 @@ export default function Settings() {
                   { id: 'screen', label: 'Screen Reader Optimizations', desc: 'Appends ARIA attributes dynamically to complex statistics boards.', state: screenReader, set: setScreenReader },
                   { id: 'anim', label: 'Reduced Animations', desc: 'Deactivates background pulses and dynamic slide overlays.', state: reducedAnimations, set: setReducedAnimations }
                 ].map((accItem) => (
-                  <div key={accItem.id} className="flex items-start justify-between gap-4 p-3 bg-slate-950/30 border border-slate-850/60 rounded-xl">
+                  <div key={accItem.id} className="flex items-start justify-between gap-4 p-3 settings-card">
                     <div className="space-y-0.5">
                       <span className="text-xs font-bold text-slate-200 block">{accItem.label}</span>
                       <span className="text-[10px] text-slate-500 block leading-normal">{accItem.desc}</span>
@@ -674,7 +675,7 @@ export default function Settings() {
                         onChange={(e) => accItem.set(e.target.checked)}
                         className="sr-only peer" 
                       />
-                      <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 peer-checked:after:bg-slate-955 peer-checked:after:border-slate-955" />
+                      <div className="w-9 h-5 bg-gray-200 dark:bg-slate-800 rounded-full relative peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] settings-toggle-thumb bg-gray-300 border-gray-300 border rounded-full h-4 w-4 transition-all peer-checked:bg-emerald-500 peer-checked:after:translate-x-full" />
                     </label>
                   </div>
                 ))}
@@ -705,7 +706,7 @@ export default function Settings() {
                   <select
                     value={prefLang}
                     onChange={(e) => setPrefLang(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   >
                     <option value="English (US)">English (US)</option>
                     <option value="Español">Español</option>
@@ -718,7 +719,7 @@ export default function Settings() {
                   <select
                     value={prefTimezone}
                     onChange={(e) => setPrefTimezone(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   >
                     <option value="GMT-08:00 (Pacific Time)">GMT-08:00 (Pacific Time)</option>
                     <option value="GMT-05:00 (Eastern Time)">GMT-05:00 (Eastern Time)</option>
@@ -731,7 +732,7 @@ export default function Settings() {
                   <select
                     value={prefDateFormat}
                     onChange={(e) => setPrefDateFormat(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   >
                     <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2026)</option>
                     <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2026)</option>
@@ -744,7 +745,7 @@ export default function Settings() {
                   <select
                     value={prefDistance}
                     onChange={(e) => setPrefDistance(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   >
                     <option value="Miles">Miles (imperial)</option>
                     <option value="Kilometers">Kilometers (metric)</option>
@@ -756,7 +757,7 @@ export default function Settings() {
                   <select
                     value={prefTemp}
                     onChange={(e) => setPrefTemp(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   >
                     <option value="Fahrenheit">Fahrenheit (°F)</option>
                     <option value="Celsius">Celsius (°C)</option>
@@ -768,7 +769,7 @@ export default function Settings() {
                   <select
                     value={prefMap}
                     onChange={(e) => setPrefMap(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   >
                     <option value="Satellite">Satellitevision imagery</option>
                     <option value="Vector Street">Vector standard streets</option>
@@ -797,12 +798,12 @@ export default function Settings() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-slate-400">
-                <div className="p-4 bg-slate-955/40 border border-slate-850 rounded-xl space-y-1">
+                <div className="p-4 settings-card space-y-1">
                   <span className="text-[9px] text-slate-500 uppercase font-bold block">Application Version</span>
                   <span className="text-white font-extrabold text-xs block">v1.4.0-release</span>
                 </div>
 
-                <div className="p-4 bg-slate-955/40 border border-slate-850 rounded-xl space-y-1">
+                <div className="p-4 settings-card space-y-1">
                   <span className="text-[9px] text-slate-500 uppercase font-bold block">Build Number</span>
                   <span className="text-white font-extrabold text-xs block">build-2026.06.30.0954</span>
                 </div>
@@ -811,10 +812,10 @@ export default function Settings() {
               <div className="border-t border-slate-850 pt-5 space-y-4">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Resources & Support</h4>
                 
-                <div className="flex flex-col gap-2 font-bold text-xs text-slate-350">
+                <div className="flex flex-col gap-2 font-bold text-xs text-muted-foreground">
                   <button 
                     onClick={() => toast('Privacy Agreement loaded.', 'success')}
-                    className="flex justify-between items-center p-3 bg-slate-950/20 border border-slate-850/60 rounded-xl hover:bg-slate-900/30 transition-colors w-full text-left"
+                    className="flex justify-between items-center p-3 settings-box hover:bg-gray-100/50 dark:hover:bg-slate-900/20 transition-colors w-full text-left"
                   >
                     <span>Read Privacy Policy Agreement</span>
                     <ChevronRight size={14} className="text-slate-500" />
@@ -822,7 +823,7 @@ export default function Settings() {
 
                   <button 
                     onClick={() => toast('Terms of Service Agreement loaded.', 'success')}
-                    className="flex justify-between items-center p-3 bg-slate-950/20 border border-slate-850/60 rounded-xl hover:bg-slate-900/30 transition-colors w-full text-left"
+                    className="flex justify-between items-center p-3 settings-box hover:bg-gray-100/50 dark:hover:bg-slate-900/20 transition-colors w-full text-left"
                   >
                     <span>Read Terms of Service Agreement</span>
                     <ChevronRight size={14} className="text-slate-500" />
@@ -830,7 +831,7 @@ export default function Settings() {
 
                   <button 
                     onClick={() => toast('Licenses catalog loaded.', 'success')}
-                    className="flex justify-between items-center p-3 bg-slate-950/20 border border-slate-850/60 rounded-xl hover:bg-slate-900/30 transition-colors w-full text-left"
+                    className="flex justify-between items-center p-3 settings-box hover:bg-gray-100/50 dark:hover:bg-slate-900/20 transition-colors w-full text-left"
                   >
                     <span>Open Source Licenses catalog</span>
                     <ChevronRight size={14} className="text-slate-500" />
@@ -838,7 +839,7 @@ export default function Settings() {
 
                   <button 
                     onClick={() => navigate('/track')}
-                    className="flex justify-between items-center p-3 bg-slate-950/20 border border-slate-850/60 rounded-xl hover:bg-slate-900/30 transition-colors w-full text-left"
+                    className="flex justify-between items-center p-3 settings-box hover:bg-gray-100/50 dark:hover:bg-slate-900/20 transition-colors w-full text-left"
                   >
                     <span>Contact Operations Support Desk</span>
                     <ChevronRight size={14} className="text-slate-500" />
@@ -848,7 +849,7 @@ export default function Settings() {
                     href="https://github.com" 
                     target="_blank" 
                     rel="noreferrer"
-                    className="flex justify-between items-center p-3 bg-slate-950/20 border border-slate-850/60 rounded-xl hover:bg-slate-900/30 transition-colors w-full text-left text-slate-350"
+                    className="flex justify-between items-center p-3 bg-slate-950/20 border border-slate-850/60 rounded-xl hover:bg-slate-900/30 transition-colors w-full text-left text-muted-foreground"
                   >
                     <span>Official GitHub Repository</span>
                     <ChevronRight size={14} className="text-slate-500" />
@@ -872,7 +873,7 @@ export default function Settings() {
                   <select
                     value={adminModel}
                     onChange={(e) => setAdminModel(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   >
                     <option value="gemini-2.5-flash">Gemini 2.5 Flash (Default)</option>
                     <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
@@ -899,7 +900,7 @@ export default function Settings() {
                   <select
                     value={logVerbosity}
                     onChange={(e) => setLogVerbosity(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
+                    className="w-full border border-border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none"
                   >
                     <option value="INFO">INFO (Minimal console noise)</option>
                     <option value="DEBUG">DEBUG (Detailed AI grounding context logs)</option>

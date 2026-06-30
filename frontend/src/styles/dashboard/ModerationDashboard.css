@@ -1,0 +1,74 @@
+/* Trust & Safety Moderation Dashboard Styles */
+
+.moderation-filter-panel {
+  background-color: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s ease;
+}
+
+.dark .moderation-filter-panel {
+  background-color: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.moderation-table-container {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.moderation-table-header {
+  background-color: rgba(247, 249, 252, 0.5);
+  border-bottom: 1px solid var(--border);
+}
+
+.dark .moderation-table-header {
+  background-color: rgba(15, 23, 42, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.moderation-row {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+}
+
+.moderation-row:hover {
+  background-color: rgba(247, 249, 252, 0.8);
+}
+
+.dark .moderation-row:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.moderation-row.selected {
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+.dark .moderation-row.selected {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.spam-score-badge {
+  font-family: monospace;
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 10px;
+}
+
+.spam-score-high {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.spam-score-low {
+  background-color: rgba(0, 0, 0, 0.04);
+  color: var(--muted-foreground);
+}
+
+.dark .spam-score-low {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+}

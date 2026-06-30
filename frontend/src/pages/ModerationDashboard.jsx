@@ -11,6 +11,7 @@ import {
   Search, RefreshCw, ShieldAlert, CheckCircle2, EyeOff, Lock, Pin, 
   Trash2, Undo, AlertCircle, AlertTriangle, ArrowUpDown, ChevronDown, Check
 } from 'lucide-react';
+import '../styles/dashboard/ModerationDashboard.css';
 
 export default function ModerationDashboard() {
   const navigate = useNavigate();
@@ -382,20 +383,20 @@ export default function ModerationDashboard() {
   });
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 py-4 animate-fade-in text-slate-805 dark:text-slate-200">
+    <div className="max-w-6xl mx-auto space-y-6 py-4 animate-fade-in text-foreground">
       
       {/* Page Title */}
       <div>
-        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Trust &amp; Safety Dashboard</h2>
-        <p className="text-xs text-slate-500 dark:text-slate-450 mt-1 font-medium">
+        <h2 className="text-2xl font-black text-foreground tracking-tight">Trust &amp; Safety Dashboard</h2>
+        <p className="text-xs text-muted-foreground mt-1 font-medium">
           Review community reports, verify spam classifications, modify item visibility, and consult moderation history audits.
         </p>
       </div>
 
       {/* Sticky Top Filter Panel */}
-      <div className="sticky top-16 z-30 bg-white/90 dark:bg-slate-950/80 backdrop-blur-md border border-slate-200 dark:border-slate-850 p-4 rounded-2xl shadow-lg grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="sticky top-16 z-30 moderation-filter-panel p-4 rounded-2xl shadow-lg grid grid-cols-2 md:grid-cols-6 gap-3">
         <div className="relative col-span-2">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
             <Search size={14} />
           </span>
           <input
@@ -403,14 +404,14 @@ export default function ModerationDashboard() {
             placeholder="Search incident title, city, or reporter..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs focus:border-emerald-500/50 focus:outline-none text-slate-900 dark:text-slate-200"
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl focus:border-emerald-500/50 focus:outline-none"
           />
         </div>
 
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 text-xs focus:outline-none text-slate-700 dark:text-slate-300 font-bold"
+          className="rounded-xl px-2.5 py-2 text-xs focus:outline-none font-bold"
         >
           <option value="">All Categories</option>
           <option value="ROADS">Roads</option>
@@ -423,7 +424,7 @@ export default function ModerationDashboard() {
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 text-xs focus:outline-none text-slate-700 dark:text-slate-300 font-bold"
+          className="rounded-xl px-2.5 py-2 text-xs focus:outline-none font-bold"
         >
           <option value="">All Visibility States</option>
           <option value="VISIBLE">Visible</option>
@@ -437,7 +438,7 @@ export default function ModerationDashboard() {
         <select
           value={spamScoreFilter}
           onChange={(e) => setSpamScoreFilter(e.target.value)}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 text-xs focus:outline-none text-slate-700 dark:text-slate-300 font-bold"
+          className="rounded-xl px-2.5 py-2 text-xs focus:outline-none font-bold"
         >
           <option value="">All Spam Scores</option>
           <option value="high">High (&ge; 40%)</option>
@@ -446,7 +447,7 @@ export default function ModerationDashboard() {
 
         <Button
           onClick={fetchIncidents}
-          className="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-850 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 text-xs py-2 rounded-xl flex items-center justify-center gap-1.5 shadow"
+          className="bg-card hover:bg-muted/50 text-foreground border border-border text-xs py-2 rounded-xl flex items-center justify-center gap-1.5 shadow"
         >
           <RefreshCw size={12} />
           Refresh
@@ -518,10 +519,10 @@ export default function ModerationDashboard() {
               )}
 
               {/* Table */}
-              <div className="overflow-x-auto border border-slate-200 dark:border-slate-850 rounded-2xl bg-white dark:bg-slate-950/10 shadow-sm">
+              <div className="overflow-x-auto moderation-table-container rounded-2xl">
                 <table className="w-full text-left border-collapse text-xs select-none">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-850 text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-slate-900/10">
+                    <tr className="moderation-table-header text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                       <th className="py-3.5 px-3 w-8 text-center">
                         <input
                           type="checkbox"
@@ -530,7 +531,7 @@ export default function ModerationDashboard() {
                             if (e.target.checked) setSelectedIds(filteredIncidents.map(i => i.id));
                             else setSelectedIds([]);
                           }}
-                          className="rounded border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 text-emerald-500"
+                          className="rounded border-border bg-white dark:bg-[#090d16] text-emerald-500"
                         />
                       </th>
                       <th className="py-3.5 px-3">Title Summary</th>
@@ -546,7 +547,7 @@ export default function ModerationDashboard() {
                   <tbody>
                     {filteredIncidents.length === 0 ? (
                       <tr>
-                        <td colSpan="9" className="py-12 text-center font-bold text-slate-400">
+                        <td colSpan="9" className="py-12 text-center font-bold text-muted-foreground">
                           No pending reports in trust review queue.
                         </td>
                       </tr>
@@ -557,8 +558,8 @@ export default function ModerationDashboard() {
                         return (
                           <tr
                             key={inc.id}
-                            className={`border-b border-slate-200 dark:border-slate-850/60 hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors ${
-                              isSelected ? 'bg-emerald-500/5 dark:bg-emerald-500/10' : ''
+                            className={`moderation-row cursor-pointer transition-colors ${
+                              isSelected ? 'selected' : ''
                             }`}
                             onClick={() => navigate(`/incidents/${inc.id}`)}
                             onKeyDown={(e) => handleKeyDown(e, inc.id)}
@@ -572,27 +573,27 @@ export default function ModerationDashboard() {
                                   e.stopPropagation();
                                   setSelectedIds(prev => prev.includes(inc.id) ? prev.filter(x => x !== inc.id) : [...prev, inc.id]);
                                 }}
-                                className="rounded border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 text-emerald-500"
+                                className="rounded border-border bg-white dark:bg-[#090d16] text-emerald-500"
                               />
                             </td>
                             <td className="py-3 px-3">
-                              <span className="font-bold text-slate-900 dark:text-white block truncate max-w-[180px]">{inc.title}</span>
-                              <span className="text-[9px] text-slate-400 dark:text-slate-550 block font-mono mt-0.5">{inc.id.slice(0, 8)}</span>
+                              <span className="font-bold text-foreground block truncate max-w-[180px]">{inc.title}</span>
+                              <span className="text-[9px] text-muted-foreground block font-mono mt-0.5">{inc.id.slice(0, 8)}</span>
                             </td>
                             <td className="py-3 px-3">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                 {inc.category?.replace(/_/g, ' ') || 'OTHER'}
                               </span>
                             </td>
-                            <td className="py-3 px-3 text-slate-600 dark:text-slate-400 truncate max-w-[100px]" title={inc.reportedBy}>
+                            <td className="py-3 px-3 text-muted-foreground truncate max-w-[100px]" title={inc.reportedBy}>
                               {inc.reportedBy}
                             </td>
-                            <td className="py-3 px-3 text-slate-600 dark:text-slate-400 truncate max-w-[120px]">
+                            <td className="py-3 px-3 text-muted-foreground truncate max-w-[120px]">
                               {inc.location}
                             </td>
-                            <td className="py-3 px-3 font-mono font-bold">
-                              <span className={`px-2 py-0.5 rounded text-[10px] ${
-                                inc.spamScore >= 0.4 ? 'bg-rose-500/10 text-rose-600 dark:text-rose-500' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400'
+                            <td className="py-3 px-3">
+                              <span className={`spam-score-badge ${
+                                inc.spamScore >= 0.4 ? 'spam-score-high' : 'spam-score-low'
                               }`}>
                                 {Math.round(inc.spamScore * 100)}%
                               </span>
@@ -602,7 +603,7 @@ export default function ModerationDashboard() {
                                 {visBadge.label}
                               </span>
                             </td>
-                            <td className="py-3 px-3 text-slate-600 dark:text-slate-355 font-bold">
+                            <td className="py-3 px-3 text-muted-foreground font-bold">
                               {inc.moderator}
                             </td>
                             <td className="py-3 px-3 text-right" onClick={(e) => e.stopPropagation()}>

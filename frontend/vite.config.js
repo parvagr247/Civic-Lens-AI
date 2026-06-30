@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  envDir: '../',
   server: {
     port: 3026,
     strictPort: true, // Prevents Vite from auto-trying other ports if 3026 is busy

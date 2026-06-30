@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle2, Circle, Clock } from 'lucide-react';
+import '../../styles/dashboard/RiskDashboard.css';
 
 /**
  * TimelineCard component.
@@ -46,9 +47,9 @@ export default function TimelineCard({ incident, analysis, risk }) {
   ];
 
   return (
-    <div className="w-full bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-xl p-5 shadow-xl">
-      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-5 flex items-center gap-1.5">
-        <Clock size={14} className="text-emerald-400" />
+    <div className="w-full timeline-stepper rounded-xl p-5">
+      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-5 flex items-center gap-1.5">
+        <Clock size={14} className="text-emerald-500" />
         Processing Execution Timeline
       </h4>
 
@@ -63,7 +64,7 @@ export default function TimelineCard({ incident, analysis, risk }) {
               {idx < checkpoints.length - 1 && (
                 <div 
                   className={`hidden md:block absolute top-2.5 left-6 w-[calc(100%-1.5rem)] h-[1px] transition-colors duration-500 ${
-                    checkpoints[idx + 1].time ? 'bg-emerald-500/50' : 'bg-slate-800'
+                    checkpoints[idx + 1].time ? 'bg-emerald-500/60' : 'bg-border'
                   }`}
                 />
               )}
@@ -71,25 +72,25 @@ export default function TimelineCard({ incident, analysis, risk }) {
               {/* Status Circle indicator */}
               <div className="shrink-0 z-10">
                 {isDone ? (
-                  <CheckCircle2 size={20} className="text-emerald-400 fill-emerald-950/40" />
+                  <CheckCircle2 size={20} className="text-emerald-500 fill-emerald-500/10" />
                 ) : (
-                  <Circle size={20} className="text-slate-700 fill-slate-900" />
+                  <Circle size={20} className="text-muted-foreground/30 fill-muted/30" />
                 )}
               </div>
 
               {/* Text labels */}
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5">
-                  <span className={`text-xs font-semibold ${isDone ? 'text-slate-200' : 'text-slate-500'}`}>
+                  <span className={`text-xs font-semibold ${isDone ? 'text-foreground' : 'text-muted-foreground'}`}>
                     {step.label}
                   </span>
                   {isDone && (
-                    <span className="text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-900/40 px-1 rounded font-mono leading-none">
+                    <span className="text-[10px] text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-1 rounded font-mono leading-none">
                       {formatTime(step.time)}
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-slate-500 leading-normal max-w-[160px]">
+                <p className="text-[10px] text-muted-foreground leading-normal max-w-[160px]">
                   {step.description}
                 </p>
               </div>
