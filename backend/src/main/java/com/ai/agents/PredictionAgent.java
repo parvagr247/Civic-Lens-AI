@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Agent specialized in structural lifecycle forecasting, costs, difficulty, and SLA escalation alerts.
+ * Agent specialized in structural lifecycle forecasting, risk escalation curves, road closure, and SLA alerts.
  */
 @Slf4j
 @Component
@@ -22,22 +22,26 @@ public class PredictionAgent implements BaseAgent {
 
     @Override
     public String execute(String context) {
-        log.info("Prediction Agent: Resolving structural repair predictions.");
-        String prompt = "You are the Predictive Operations Agent. Given the incident context:\n" +
+        log.info("Prediction Agent: Resolving structural and risk propagation forecasts.");
+        String prompt = "You are the Predictive Operations Agent. Given the consolidated context:\n" +
                 context + "\n" +
-                "Generate a JSON prediction response matching:\n" +
+                "Generate a JSON prediction response exactly matching:\n" +
                 "{\n" +
                 "  \"repairCost\": 1200,\n" +
                 "  \"estimatedHours\": 48,\n" +
-                "  \"escalationProbability\": 0.15,\n" +
-                "  \"futureComplaintProbability\": 0.35,\n" +
-                "  \"trafficImpact\": \"MEDIUM\",\n" +
-                "  \"populationImpact\": 350,\n" +
-                "  \"repairDifficulty\": \"MEDIUM\",\n" +
-                "  \"weatherImpact\": \"Resurfacing delayed if wet asphalt conditions arise.\",\n" +
+                "  \"escalationProbability\": 0.45,\n" +
+                "  \"futureSeverity\": \"CRITICAL\",\n" +
+                "  \"incidentGrowth\": \"HIGH\",\n" +
+                "  \"citizenImpact\": \"MAJOR\",\n" +
+                "  \"roadClosurePossibility\": 0.80,\n" +
+                "  \"weatherEffect\": \"Resurfacing delayed if wet asphalt conditions arise.\",\n" +
+                "  \"estimatedCriticalTime\": \"36 Hours\",\n" +
+                "  \"futureRiskScore\": 90,\n" +
                 "  \"confidence\": 0.88,\n" +
                 "  \"reasoning\": \"...\"\n" +
-                "}";
+                "}\n" +
+                "Do not include other markdown wrapping, output only valid JSON.";
         return geminiService.callTextModel(prompt);
     }
 }
+

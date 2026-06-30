@@ -13,3 +13,14 @@ import api from './api';
 export const getIncidentAnalysis = (incidentId) => {
   return api.get(`/api/issues/${incidentId}/analysis`);
 };
+
+/**
+ * Fetches the unified AI Multi-Agent Orchestration findings and execution log records.
+ *
+ * @param {string} incidentId Incident UUID.
+ * @returns {Promise<Object>} The api response envelope containing AgentOrchestrationResult.
+ */
+export const getIncidentOrchestration = (incidentId) => {
+  return api.get(`/api/issues/${incidentId}/orchestration`);
+};
+

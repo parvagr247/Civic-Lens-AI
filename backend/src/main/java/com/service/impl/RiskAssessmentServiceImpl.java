@@ -37,6 +37,7 @@ public class RiskAssessmentServiceImpl implements RiskAssessmentService {
     private final GeminiService geminiService;
     private final RiskAssessmentPromptBuilder promptBuilder;
     private final ObjectMapper objectMapper;
+    private final com.ai.agents.SupervisorAgent supervisorAgent;
 
     public RiskAssessmentServiceImpl(
             IncidentRepository incidentRepository,
@@ -44,87 +45,42 @@ public class RiskAssessmentServiceImpl implements RiskAssessmentService {
             RiskAssessmentRepository riskAssessmentRepository,
             GeminiService geminiService,
             RiskAssessmentPromptBuilder promptBuilder,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            com.ai.agents.SupervisorAgent supervisorAgent) {
         this.incidentRepository = incidentRepository;
         this.analysisRepository = analysisRepository;
         this.riskAssessmentRepository = riskAssessmentRepository;
         this.geminiService = geminiService;
         this.promptBuilder = promptBuilder;
         this.objectMapper = objectMapper;
+        this.supervisorAgent = supervisorAgent;
     }
 
     @Override
     public RiskAssessment assessIncidentRisk(String incidentId) {
         log.info("Starting AI Risk Assessment for Incident ID: {}", incidentId);
 
-        // 1. Fetch Incident and check existence
+        // Fetch Incident and check existence
         Incident incident = incidentRepository.findById(incidentId);
         if (incident == null) {
             throw new ResourceNotFoundException("Incident not found with ID: " + incidentId);
         }
 
-        // 2. Fetch Visual Analysis and check existence
-        IncidentAnalysis analysis = analysisRepository.findByIncidentId(incidentId);
-        if (analysis == null) {
-            log.warn("Incident {} lacks AI visual analysis. Cannot perform risk assessment.", incidentId);
-            throw new ValidationException("Incident must undergo visual analysis before assessing risk.");
+        // Trigger the multi-agent dynamic orchestrator to process all agent cards
+        try {
+            supervisorAgent.orchestrate(incidentId);
+            log.info("Orchestration: Successfully evaluated and updated risk metrics for {}", incidentId);
+        } catch (Exception e) {
+            log.error("Orchestration Warning: Multi-agent pipeline failed. Falling back to existing assessment.", e);
         }
 
-        // 3. Build text-based risk analysis prompt
-        String promptText = promptBuilder.buildRiskPrompt(
-                incident.getTitle(),
-                incident.getDescription(),
-                incident.getCategory() != null ? incident.getCategory().name() : "OTHER",
-                incident.getLocation() != null ? incident.getLocation().getAddress() : "Unknown location",
-                analysis.getSummary(),
-                analysis.getObservedDamages()
-        );
-
-        // 4. Submit prompt to Gemini Service
-        String jsonContent = geminiService.callTextModel(promptText);
-
-        // 5. Parse JSON output and map to RiskAssessment entity
-        GeminiRiskRaw raw = parseRiskJson(jsonContent);
-
-        // 6. Build RiskAssessment object
-        RiskSeverity severity = safeEnum(RiskSeverity.class, raw.getSeverity(), RiskSeverity.MAJOR);
-        ResponseUrgency urgency = safeEnum(ResponseUrgency.class, raw.getUrgency(), ResponseUrgency.WITHIN_3_DAYS);
-        PriorityLevel priority = safeEnum(PriorityLevel.class, raw.getPriority(), PriorityLevel.P3);
-        ThreatLevel threatLevel = safeEnum(ThreatLevel.class, raw.getThreatLevel(), ThreatLevel.MEDIUM);
-
-        // Check if an existing assessment already exists to preserve creation timestamp
-        RiskAssessment existing = riskAssessmentRepository.findByIncidentId(incidentId);
-        long now = System.currentTimeMillis();
-
-        RiskAssessment assessment = RiskAssessment.builder()
-                .id(existing != null ? existing.getId() : UUID.randomUUID().toString())
-                .incidentId(incidentId)
-                .overallRiskScore(raw.getOverallRiskScore() != null ? raw.getOverallRiskScore() : 50)
-                .severity(severity)
-                .urgency(urgency)
-                .confidence(raw.getConfidence() != null ? raw.getConfidence() : 0.8)
-                .priority(priority)
-                .threatLevel(threatLevel)
-                .estimatedResolutionTime(raw.getEstimatedResolutionTime())
-                .affectedPopulation(raw.getAffectedPopulation() != null ? raw.getAffectedPopulation() : 100)
-                .affectedDepartments(raw.getAffectedDepartments())
-                .potentialEscalation(raw.getPotentialEscalation())
-                .publicSafetyImpact(raw.getPublicSafetyImpact())
-                .infrastructureImpact(raw.getInfrastructureImpact())
-                .environmentalImpact(raw.getEnvironmentalImpact())
-                .accessibilityImpact(raw.getAccessibilityImpact())
-                .reasoning(raw.getReasoning())
-                .recommendations(raw.getRecommendations())
-                .createdAt(existing != null ? existing.getCreatedAt() : now)
-                .updatedAt(now)
-                .build();
-
-        // 7. Save to Firestore
-        riskAssessmentRepository.save(assessment);
-        log.info("Risk assessment generated and saved successfully for incident: {}", incidentId);
-
+        RiskAssessment assessment = riskAssessmentRepository.findByIncidentId(incidentId);
+        if (assessment == null) {
+            throw new ResourceNotFoundException("Failed to retrieve or generate risk assessment for incident: " + incidentId);
+        }
         return assessment;
     }
+
 
     @Override
     public RiskAssessment getRiskByIncidentId(String incidentId) {

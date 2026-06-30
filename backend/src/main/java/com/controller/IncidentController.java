@@ -53,6 +53,8 @@ public class IncidentController {
     private final com.repository.AssignmentFirestoreRepository assignmentRepository;
     private final com.repository.OfficerFirestoreRepository officerRepository;
     private final com.repository.RiskAssessmentRepository riskAssessmentRepository;
+    private final com.repository.AgentOrchestrationResultRepository orchestrationResultRepository;
+    private final com.ai.agents.SupervisorAgent supervisorAgent;
 
     public IncidentController(
             IssueAnalysisWorkflow analysisWorkflow,
@@ -66,7 +68,9 @@ public class IncidentController {
             com.repository.AuditLogFirestoreRepository auditLogRepository,
             com.repository.AssignmentFirestoreRepository assignmentRepository,
             com.repository.OfficerFirestoreRepository officerRepository,
-            com.repository.RiskAssessmentRepository riskAssessmentRepository) {
+            com.repository.RiskAssessmentRepository riskAssessmentRepository,
+            com.repository.AgentOrchestrationResultRepository orchestrationResultRepository,
+            com.ai.agents.SupervisorAgent supervisorAgent) {
         this.analysisWorkflow = analysisWorkflow;
         this.riskAssessmentWorkflow = riskAssessmentWorkflow;
         this.incidentRepository = incidentRepository;
@@ -79,7 +83,10 @@ public class IncidentController {
         this.assignmentRepository = assignmentRepository;
         this.officerRepository = officerRepository;
         this.riskAssessmentRepository = riskAssessmentRepository;
+        this.orchestrationResultRepository = orchestrationResultRepository;
+        this.supervisorAgent = supervisorAgent;
     }
+
 
     /**
      * Registers a new civic incident, triggers Gemini Vision AI, and chains risk analysis.
@@ -781,4 +788,30 @@ public class IncidentController {
         }
         return ResponseEntity.ok(ApiResponse.success(null, "Reports verified successfully.", 200));
     }
+
+    /**
+     * Retrieves the complete AI Multi-Agent Orchestration findings and execution log records.
+     */
+    @GetMapping("/{id}/orchestration")
+    public ResponseEntity<ApiResponse<com.model.AgentOrchestrationResult>> getIncidentOrchestration(
+            @PathVariable String id) {
+        log.info("REST: Fetching agent orchestration result for incident: {}", id);
+        com.model.AgentOrchestrationResult result = orchestrationResultRepository.findByIncidentId(id);
+        
+        if (result == null) {
+            log.info("REST: Orchestration not found for {}. Executing dynamic pipeline sync.", id);
+            try {
+                result = supervisorAgent.orchestrate(id);
+            } catch (Exception e) {
+                log.error("REST: Dynamic orchestration pipeline failed on query for {}", id, e);
+            }
+        }
+        
+        return ResponseEntity.ok(ApiResponse.success(
+                result,
+                "Orchestration results retrieved successfully.",
+                200
+        ));
+    }
 }
+

@@ -32,24 +32,15 @@ public class IssueAnalysisWorkflow {
 
     private final StorageService storageService;
     private final IncidentRepository incidentRepository;
-    private final IncidentAnalysisRepository analysisRepository;
-    private final GeminiService geminiService;
-    private final PromptBuilder promptBuilder;
-    private final ObjectMapper objectMapper;
+    private final com.ai.agents.SupervisorAgent supervisorAgent;
 
     public IssueAnalysisWorkflow(
             StorageService storageService,
             IncidentRepository incidentRepository,
-            IncidentAnalysisRepository analysisRepository,
-            GeminiService geminiService,
-            PromptBuilder promptBuilder,
-            ObjectMapper objectMapper) {
+            com.ai.agents.SupervisorAgent supervisorAgent) {
         this.storageService = storageService;
         this.incidentRepository = incidentRepository;
-        this.analysisRepository = analysisRepository;
-        this.geminiService = geminiService;
-        this.promptBuilder = promptBuilder;
-        this.objectMapper = objectMapper;
+        this.supervisorAgent = supervisorAgent;
     }
 
     /**
@@ -74,7 +65,7 @@ public class IssueAnalysisWorkflow {
                 request.getAddress()
         );
 
-                String reportedBy = "anonymous@civiclens.gov";
+        String reportedBy = "anonymous@civiclens.gov";
         try {
             org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
@@ -105,95 +96,16 @@ public class IssueAnalysisWorkflow {
         incidentRepository.save(incident);
         log.info("Initial Incident record saved with status: REPORTED");
 
-        // 3. Build AI prompt and request analysis from Gemini Vision
-        String promptText = promptBuilder.buildVisionAnalysisPrompt(request.getDescription());
-        String aiResponseJson = geminiService.analyzeImage(request.getImage(), promptText);
-
-        // 4. Parse JSON and map to IncidentAnalysis entity
-        GeminiAnalysisOutput parsedOutput = parseAiResponse(aiResponseJson);
-
-        IncidentAnalysis analysis = IncidentAnalysis.builder()
-                .id(UUID.randomUUID().toString())
-                .incidentId(incidentId)
-                .summary(parsedOutput.getSummary())
-                .observedDamages(parsedOutput.getObservedDamages())
-                .likelyCause(parsedOutput.getLikelyCause())
-                .confidence(parsedOutput.getConfidence())
-                .recommendedAction(parsedOutput.getRecommendedAction())
-                .reasoning(parsedOutput.getReasoning())
-                .analyzedAt(System.currentTimeMillis())
-                .build();
-
-        analysisRepository.save(analysis);
-        log.info("Incident Analysis record successfully saved.");
-
-        // 5. Update parent Incident properties with AI classification results
-        incident.setCategory(parsedOutput.getCategory());
-        incident.setStatus(IncidentStatus.UNDER_REVIEW);
-        incident.setUpdatedAt(System.currentTimeMillis());
-        
-        incidentRepository.save(incident);
-        log.info("Incident updated with AI category: {} and status: UNDER_REVIEW", parsedOutput.getCategory());
-
-        return IncidentResponse.fromEntity(incident);
-    }
-
-    /**
-     * Parses the raw JSON response from Gemini into a structured class model.
-     */
-    private GeminiAnalysisOutput parseAiResponse(String jsonContent) {
+        // 3. Trigger the multi-agent dynamic orchestrator
         try {
-            log.debug("Parsing Gemini response JSON content: {}", jsonContent);
-            GeminiResponseRaw raw = objectMapper.readValue(jsonContent, GeminiResponseRaw.class);
-            
-            // Map parsed category text to enum safely
-            IssueCategory category;
-            try {
-                category = IssueCategory.valueOf(raw.getCategory().toUpperCase());
-            } catch (Exception e) {
-                log.warn("Unknown issue category received: {}. Defaulting to OTHER.", raw.getCategory());
-                category = IssueCategory.OTHER;
-            }
-
-            return new GeminiAnalysisOutput(
-                    category,
-                    raw.getSummary(),
-                    raw.getObservedDamages(),
-                    raw.getLikelyCause(),
-                    raw.getConfidence(),
-                    raw.getRecommendedAction(),
-                    raw.getReasoning()
-            );
+            supervisorAgent.orchestrate(incidentId);
+            log.info("Workflow: Dynamic multi-agent orchestration completed for incident {}", incidentId);
         } catch (Exception e) {
-            log.error("Failed to parse Gemini Vision JSON response. Raw output: {}", jsonContent, e);
-            throw new AIException("Malformed AI response format: Failed to parse structured JSON report.", e);
+            log.error("Workflow Error: Multi-agent orchestration failed for incident {}", incidentId, e);
         }
-    }
 
-    // Inner class helper to represent raw Jackson deserialization target
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    private static class GeminiResponseRaw {
-        private String category;
-        private String summary;
-        private List<String> observedDamages;
-        private String likelyCause;
-        private Double confidence;
-        private String recommendedAction;
-        private String reasoning;
-    }
-
-    // Helper holder class for clean business mapping
-    @Data
-    @AllArgsConstructor
-    private static class GeminiAnalysisOutput {
-        private IssueCategory category;
-        private String summary;
-        private List<String> observedDamages;
-        private String likelyCause;
-        private Double confidence;
-        private String recommendedAction;
-        private String reasoning;
+        // Fetch refreshed incident
+        Incident updatedIncident = incidentRepository.findById(incidentId);
+        return IncidentResponse.fromEntity(updatedIncident != null ? updatedIncident : incident);
     }
 }

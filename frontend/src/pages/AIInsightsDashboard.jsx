@@ -202,14 +202,46 @@ export default function AIInsightsDashboard() {
                 <p className="text-[9px] text-slate-500 leading-normal">Incidents, Assignments, Officers, and Citizen Comments are queryable.</p>
               </div>
 
-              <div className="p-3 bg-slate-50 dark:bg-slate-950/30 border border-slate-150 dark:border-slate-850 rounded-xl space-y-1">
+              <div className="p-3 bg-slate-50 dark:bg-slate-950/30 border border-slate-150 dark:border-slate-855 rounded-xl space-y-1">
                 <span className="text-[9px] text-slate-450 uppercase block font-bold">Embedding updates</span>
                 <span className="font-extrabold text-slate-800 dark:text-slate-200 block">Real-time sync</span>
                 <p className="text-[9px] text-slate-500 leading-normal">Firestore changes are automatically synchronized with the retrieval context prompts.</p>
               </div>
             </div>
           </div>
+
+          {/* AI Fleet Monitoring */}
+          <div className="bg-white dark:bg-slate-900/20 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-450 uppercase tracking-widest flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-2">
+              <Cpu size={14} className="text-emerald-500" />
+              AI Agent Fleet Status
+            </h3>
+            <div className="space-y-2 text-[9.5px]">
+              {[
+                { name: 'Supervisor Agent', role: 'Dynamic Stage Orchestrator', status: 'COMPLETED' },
+                { name: 'Vision Agent', role: 'Visual Damage Analyzer', status: 'COMPLETED' },
+                { name: 'Geo-Intelligence Agent', role: 'Spatial Infrastructure Planner', status: 'COMPLETED' },
+                { name: 'Duplicate Agent', role: 'Spatial-Temporal Merger', status: 'COMPLETED' },
+                { name: 'Citizen Trust Agent', role: 'Integrity Validator', status: 'COMPLETED' },
+                { name: 'Risk Agent', role: 'Severity & Urgency Scorer', status: 'COMPLETED' },
+                { name: 'Dispatcher Agent', role: 'Crew Response Planner', status: 'COMPLETED' },
+                { name: 'Prediction Agent', role: 'Escalation & Closure Modeler', status: 'COMPLETED' },
+                { name: 'Explainability Agent', role: 'Decision Rationale Footnoter', status: 'COMPLETED' },
+              ].map((agent, i) => (
+                <div key={i} className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-150 dark:border-slate-850">
+                  <div>
+                    <span className="font-extrabold text-slate-850 dark:text-slate-200 block">{agent.name}</span>
+                    <span className="text-[8px] text-slate-500">{agent.role}</span>
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded text-[7.5px] font-black bg-emerald-950 text-emerald-400 border border-emerald-900 uppercase">
+                    {agent.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+
 
       </div>
 
