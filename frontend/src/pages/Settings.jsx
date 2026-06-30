@@ -895,19 +895,6 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Firestore Credentials File Path</label>
-                  <input
-                    type="text"
-                    value={firebasePath}
-                    onChange={(e) => setFirebasePath(e.target.value)}
-                    className="w-full bg-slate-955/35 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50"
-                  />
-                  <span className="text-[9px] text-slate-500 block mt-1">
-                    Default context classpath loader: firebase-service-account.json
-                  </span>
-                </div>
-
-                <div className="space-y-1.5 sm:col-span-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Console Logging Verbosity</label>
                   <select
                     value={logVerbosity}

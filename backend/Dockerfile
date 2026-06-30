@@ -13,8 +13,8 @@ RUN addgroup -S civiclens && adduser -S civiclens -G civiclens
 WORKDIR /app
 COPY --from=build /app/target/civiclens-0.0.1-SNAPSHOT.jar app.jar
 
-# Setup logging mount point and external firebase configuration directory
-RUN mkdir -p /opt/civiclens/logs /opt/civiclens/firebase && \
+# Setup logging mount point
+RUN mkdir -p /opt/civiclens/logs && \
     chown -R civiclens:civiclens /app /opt/civiclens
 
 USER civiclens

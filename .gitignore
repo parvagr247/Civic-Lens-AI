@@ -20,3 +20,4 @@ firebase-service-account.json
 *.sublime-workspace
 .vscode/
 .DS_Store
+.env.example

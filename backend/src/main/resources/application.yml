@@ -39,7 +39,6 @@ app:
   allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:3026,http://127.0.0.1:3026}
   # Firebase Configuration Details
   firebase:
-    config-path: ${FIREBASE_CONFIG_PATH:classpath:firebase-service-account.json}
     database-url: ${FIREBASE_DATABASE_URL:}
     storage-bucket: ${FIREBASE_STORAGE_BUCKET:civiclens-prod-storage.firebasestorage.app}
 

@@ -45,7 +45,7 @@ Civic-Lens-AI/
 
 1. **Frontend**: Serves React compiled bundle via Nginx. Handles SPA routing, assets compression, and acts as the secure entrypoint proxy.
 2. **Backend**: Containerized JRE 21 Alpine instance running Spring Boot. Private and hidden from direct external internet access.
-3. **Database & Storage**: Remote connection via Firebase Admin SDK. Credentials are dynamically injected into `/opt/civiclens/firebase/firebase-service-account.json`.
+3. **Database & Storage**: Remote connection via Firebase Admin SDK. Authenticates using Google Cloud Application Default Credentials (ADC) attached to the deployment environment.
 
 ---
 
@@ -56,11 +56,9 @@ Civic-Lens-AI/
 2. Go to **Firestore Database** in the left menu and click **Create database**.
 3. Choose **Start in production mode**, select your database location, and click **Enable**.
 
-### 2. Service Account Key Generation
-1. In the Firebase Console, click the **Gear Icon** (Project Settings) next to *Project Overview* -> **Project settings**.
-2. Navigate to the **Service accounts** tab.
-3. Select the **Java** configuration, and click **Generate new private key**.
-4. Save the downloaded JSON file as `firebase-service-account.json`. Place it in the directory `/opt/civiclens/firebase` on the deployment host.
+### 2. IAM Configuration Setup
+1. Ensure the deployment environment (e.g. Google Compute Engine VM or local environment) has Google Cloud Application Default Credentials (ADC) configured.
+2. Grant the target service identity the necessary permissions, such as **Cloud Datastore User** and **Storage Object Admin**, on your Firebase project.
 
 ### 3. Firebase Cloud Storage Setup (Optional)
 1. Go to **Storage** in the left menu and click **Get Started**.
@@ -81,7 +79,6 @@ Configure these variables inside a `.env` file in the project root:
 | `PORT` | Container target port | `9526` |
 | `GEMINI_API_KEY` | Google Gemini API key | `mock-gemini-key` |
 | `GEMINI_MODEL` | Gemini LLM Model | `gemini-2.5-flash` |
-| `FIREBASE_CONFIG_PATH` | path configuration on host container | `file:/opt/civiclens/firebase/firebase-service-account.json` |
 | `FIREBASE_STORAGE_BUCKET` | Cloud storage bucket URL (Optional) | `(empty)` |
 | `FIREBASE_DATABASE_URL` | Firebase database endpoint (Unused) | `(empty)` |
 | `APP_ALLOWED_ORIGINS` | CORS origins (comma-separated list) | `http://localhost,http://localhost:80` |
@@ -97,7 +94,6 @@ Configure these variables inside a `.env` file in the project root:
    cd Civic-Lens-AI
    ```
 2. Setup files on the host:
-   - Create a folder named `/opt/civiclens/firebase/` and paste your `firebase-service-account.json` key inside it.
    - Copy `.env.example` to `.env` and fill in your actual credentials.
 3. Launch using Docker Compose:
    ```bash
@@ -122,13 +118,12 @@ The declarative [Jenkinsfile](file:///p:/Agentic%20AI/CivilLens%20AI%20(Vibe%252
 #### Recommended Jenkins Configuration Best Practices:
 - Use **Jenkins Credentials Binding** to store secrets:
   - Create a `Secret text` credential for `GEMINI_API_KEY`.
-  - Create a `Secret file` credential for `firebase-service-account.json` and copy it to the `/opt/civiclens/firebase/` path during the deploy phase.
 - Use Jenkins environment mappings in the pipeline configuration to bind these values securely.
 
 ---
 
 ## Production Deployment Checklist
-1. **Secrets Security**: Ensure `.env` and `firebase-service-account.json` are added to `.gitignore` and never committed to the repo.
+1. **Secrets Security**: Ensure `.env` is added to `.gitignore` and never committed to the repo.
 2. **Permissions Setup**: Ensure `/opt/civiclens/logs` has read/write permissions for the non-root JRE Alpine user `civiclens` (UID 1000).
 3. **Port Rules**: Ensure port 80/443 is open in your Google Cloud VM firewall rules, and port 9526 is closed to external requests.
 4. **Logging Policies**: Monitor log rolling size and retention logs inside `/opt/civiclens/logs`.
@@ -143,7 +138,7 @@ Docker health checks sweep native actuator targets:
 - **Frontend**: `wget -q --spider http://localhost/ || exit 1`
 
 ### Troubleshooting Steps
-- **Actuator Health is DOWN**: Verify that `firebase-service-account.json` is correctly placed in `/opt/civiclens/firebase/` on the host. Check the spring startup logs for details:
+- **Actuator Health is DOWN**: Verify that the host service identity has correct IAM permissions on the GCP/Firebase project. Check the spring startup logs for details:
   ```bash
   docker logs civiclens-backend
   ```

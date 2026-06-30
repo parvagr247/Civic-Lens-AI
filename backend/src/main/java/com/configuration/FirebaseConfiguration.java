@@ -7,16 +7,11 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
-import com.google.firebase.cloud.StorageClient;
 import com.exception.FirebaseException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-
-import java.io.InputStream;
 
 /**
  * Enterprise bootstrap configuration for Google Firebase services.
@@ -26,16 +21,33 @@ import java.io.InputStream;
 @Configuration
 public class FirebaseConfiguration {
 
-    private final ResourceLoader resourceLoader;
-    
-    @Value("${app.firebase.config-path}")
-    private String firebaseConfigPath;
+    @Value("${app.firebase.project-id:civic-lens-b4d47}")
+    private String projectId;
 
     @Value("${app.firebase.storage-bucket}")
     private String storageBucket;
 
-    public FirebaseConfiguration(ResourceLoader resourceLoader) {
-        this.resourceLoader = resourceLoader;
+    /**
+     * Helper to safely retrieve Google Application Default Credentials (ADC)
+     * with a fallback to mock credentials for local development.
+     */
+    private GoogleCredentials getCredentials() {
+        try {
+            return GoogleCredentials.getApplicationDefault();
+        } catch (Exception e) {
+            log.warn("Application Default Credentials (ADC) were not found on this system. " +
+                     "Falling back to dummy credentials for local/offline development. " +
+                     "Error details: {}", e.getMessage());
+            return new GoogleCredentials() {
+                @Override
+                public com.google.auth.oauth2.AccessToken refreshAccessToken() throws java.io.IOException {
+                    return new com.google.auth.oauth2.AccessToken(
+                            "mock-local-token", 
+                            new java.util.Date(System.currentTimeMillis() + 3600_000)
+                    );
+                }
+            };
+        }
     }
 
     /**
@@ -44,42 +56,36 @@ public class FirebaseConfiguration {
     @Bean
     public FirebaseApp firebaseApp() {
         try {
-            String resolvedPath = firebaseConfigPath;
-            if (resolvedPath == null || resolvedPath.trim().isEmpty()) {
-                resolvedPath = "classpath:firebase-service-account.json";
-            }
-            log.info("Initializing Google Firebase App using config path: {}", resolvedPath);
-            Resource resource = resourceLoader.getResource(resolvedPath);
+            log.info("Initializing Google Firebase App using Application Default Credentials (ADC)...");
             
-            if (!resource.exists()) {
-                throw new FirebaseException("Firebase service account credentials file not found at " + resolvedPath);
+            FirebaseOptions.Builder optionsBuilder = FirebaseOptions.builder()
+                    .setCredentials(getCredentials());
+
+            if (projectId != null && !projectId.trim().isEmpty()) {
+                optionsBuilder.setProjectId(projectId.trim());
+                log.info("Firebase Project ID configured: {}", projectId.trim());
             }
 
-            try (InputStream serviceAccount = resource.getInputStream()) {
-                FirebaseOptions.Builder optionsBuilder = FirebaseOptions.builder()
-                        .setCredentials(GoogleCredentials.fromStream(serviceAccount));
+            if (storageBucket != null && !storageBucket.trim().isEmpty()) {
+                optionsBuilder.setStorageBucket(storageBucket.trim());
+                log.info("Firebase Storage bucket configured: {}", storageBucket.trim());
+            } else {
+                log.warn("Firebase Storage bucket is empty/unconfigured in properties.");
+            }
 
-                if (storageBucket != null && !storageBucket.trim().isEmpty()) {
-                    optionsBuilder.setStorageBucket(storageBucket.trim());
-                    log.info("Firebase Storage configured.");
-                } else {
-                    log.info("Firebase Storage disabled.\nStorage-dependent features unavailable.");
-                }
+            FirebaseOptions options = optionsBuilder.build();
 
-                FirebaseOptions options = optionsBuilder.build();
-
-                if (FirebaseApp.getApps().isEmpty()) {
-                    FirebaseApp app = FirebaseApp.initializeApp(options);
-                    log.info("Google Firebase initialized successfully: {}", app.getName());
-                    return app;
-                } else {
-                    log.info("Google Firebase app already initialized.");
-                    return FirebaseApp.getInstance();
-                }
+            if (FirebaseApp.getApps().isEmpty()) {
+                FirebaseApp app = FirebaseApp.initializeApp(options);
+                log.info("Google Firebase initialized successfully with ADC: {}", app.getName());
+                return app;
+            } else {
+                log.info("Google Firebase app already initialized.");
+                return FirebaseApp.getInstance();
             }
         } catch (Exception e) {
-            log.error("Failed to initialize Google Firebase Services", e);
-            throw new FirebaseException("Failed to initialize Google Firebase Services", e);
+            log.error("Failed to initialize Google Firebase Services using ADC", e);
+            throw new FirebaseException("Failed to initialize Google Firebase Services using ADC", e);
         }
     }
 
@@ -97,30 +103,22 @@ public class FirebaseConfiguration {
      */
     @Bean
     public Storage googleCloudStorage() {
-        log.info("Registering Google Cloud Storage client bean using credentials resource.");
+        log.info("Registering Google Cloud Storage client bean using Application Default Credentials (ADC).");
         try {
-            String resolvedPath = firebaseConfigPath;
-            if (resolvedPath == null || resolvedPath.trim().isEmpty()) {
-                resolvedPath = "classpath:firebase-service-account.json";
+            StorageOptions.Builder storageOptionsBuilder = StorageOptions.newBuilder()
+                    .setCredentials(getCredentials());
+            
+            if (projectId != null && !projectId.trim().isEmpty()) {
+                storageOptionsBuilder.setProjectId(projectId.trim());
             }
-            Resource resource = resourceLoader.getResource(resolvedPath);
-            if (!resource.exists()) {
-                throw new FirebaseException("Firebase credentials resource file not found at " + resolvedPath);
+
+            Storage storage = storageOptionsBuilder.build().getService();
+            if (storage == null) {
+                log.error("Google Cloud Storage client initialized as null.");
+                throw new FirebaseException("Google Cloud Storage client initialized as null.");
             }
-            try (InputStream serviceAccount = resource.getInputStream()) {
-                GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
-                Storage storage = StorageOptions.newBuilder()
-                        .setCredentials(credentials)
-                        .setProjectId("civic-lens-b4d47")
-                        .build()
-                        .getService();
-                if (storage == null) {
-                    log.error("Google Cloud Storage client initialized as null.");
-                    throw new FirebaseException("Google Cloud Storage client initialized as null.");
-                }
-                log.info("Google Cloud Storage client bean registered successfully.");
-                return storage;
-            }
+            log.info("Google Cloud Storage client bean registered successfully using ADC.");
+            return storage;
         } catch (Exception e) {
             log.error("Google Cloud Storage client could not be initialized. Stacktrace:", e);
             throw new FirebaseException("Google Cloud Storage client could not be initialized.", e);
