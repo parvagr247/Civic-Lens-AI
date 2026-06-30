@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllIncidents } from '../services/issueService';
+import { getAllIncidents, toggleIncidentSupport } from '../services/issueService';
 import { 
   addComment, 
   getComments, 
@@ -145,6 +145,38 @@ export default function CommunityFeed() {
       }
     } catch (err) {
       toast('Failed to update bookmark.', 'error');
+    }
+  };
+
+  const handleSupportToggle = async (incidentId) => {
+    if (!currentUser) {
+      toast('You must be logged in to support reports.', 'error');
+      return;
+    }
+    try {
+      const response = await toggleIncidentSupport(incidentId);
+      if (response.success && response.data) {
+        // Update the incident in the local state
+        setIncidents(prev => prev.map(inc => 
+          inc.id === incidentId 
+            ? { 
+                ...inc, 
+                supportCount: response.data.supportCount, 
+                supportedBy: response.data.supportedBy 
+              } 
+            : inc
+        ));
+        
+        const hasSupportedAfter = Array.isArray(response.data.supportedBy) && response.data.supportedBy.includes(currentUser.email);
+        if (hasSupportedAfter) {
+          toast('Supported incident! +5 XP', 'success');
+        } else {
+          toast('Removed support.', 'success');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      toast('Failed to update support status.', 'error');
     }
   };
 
@@ -321,6 +353,25 @@ export default function CommunityFeed() {
 
             {/* Action Bar */}
             <div className="flex items-center justify-between text-slate-500 dark:text-slate-450 px-1 relative">
+              <button 
+                onClick={() => handleSupportToggle(incident.id)}
+                className={`flex items-center gap-1.5 text-xs font-bold transition-all duration-200 ${
+                  Array.isArray(incident.supportedBy) && incident.supportedBy.includes(currentUser?.email)
+                    ? 'text-emerald-500 hover:text-emerald-400 scale-105' 
+                    : 'text-slate-500 hover:text-emerald-500 dark:text-slate-450 dark:hover:text-emerald-400'
+                }`}
+              >
+                <ThumbsUp 
+                  size={16} 
+                  className={
+                    Array.isArray(incident.supportedBy) && incident.supportedBy.includes(currentUser?.email) 
+                      ? 'fill-emerald-500/20 stroke-[2.5px]' 
+                      : ''
+                  } 
+                />
+                <span>Support ({incident.supportCount || 0})</span>
+              </button>
+
               <button 
                 onClick={() => toggleCommentsDrawer(incident.id)}
                 className={`flex items-center gap-1.5 text-xs font-bold hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors duration-200 ${

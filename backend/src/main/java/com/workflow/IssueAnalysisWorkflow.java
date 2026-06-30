@@ -96,6 +96,8 @@ public class IssueAnalysisWorkflow {
                 .imagePath(imagePath)
                 .reportedBy(reportedBy)
                 .anonymous(request.getAnonymous())
+                .supportCount(0)
+                .supportedBy(new java.util.ArrayList<>())
                 .createdAt(System.currentTimeMillis())
                 .updatedAt(System.currentTimeMillis())
                 .build();

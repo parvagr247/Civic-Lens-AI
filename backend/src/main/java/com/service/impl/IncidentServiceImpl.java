@@ -101,11 +101,63 @@ public class IncidentServiceImpl implements IncidentService {
 
     @Override
     public List<IncidentResponse> getAllIncidents() {
-        log.info("Incident Service: Retrieving all incidents");
+        log.info("Incident Service: Retrieving all incidents sorted by supportCount and creation date");
         return incidentRepository.findAll().stream()
-                .sorted(Comparator.comparing(Incident::getCreatedAt).reversed())
+                .sorted((i1, i2) -> {
+                    int c1 = i1.getSupportCount() != null ? i1.getSupportCount() : 0;
+                    int c2 = i2.getSupportCount() != null ? i2.getSupportCount() : 0;
+                    if (c1 != c2) {
+                        return Integer.compare(c2, c1); // supportCount descending
+                    }
+                    long t1 = i1.getCreatedAt() != null ? i1.getCreatedAt() : 0L;
+                    long t2 = i2.getCreatedAt() != null ? i2.getCreatedAt() : 0L;
+                    return Long.compare(t2, t1); // createdAt descending
+                })
                 .map(this::mapToIncidentResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public IncidentResponse toggleSupport(String incidentId, String userEmail) {
+        log.info("Incident Service: Toggling support for incident {} by user {}", incidentId, userEmail);
+
+        if (userEmail == null || userEmail.trim().isEmpty() || "anonymousUser".equalsIgnoreCase(userEmail)) {
+            throw new ValidationException("Authentication required to support incidents.");
+        }
+
+        Incident incident = incidentRepository.findById(incidentId);
+        if (incident == null) {
+            throw new ResourceNotFoundException("Incident not found with ID: " + incidentId);
+        }
+
+        List<String> supporters = incident.getSupportedBy();
+        if (supporters == null) {
+            supporters = new java.util.ArrayList<>();
+        }
+
+        if (supporters.contains(userEmail)) {
+            supporters.remove(userEmail);
+            log.info("User {} removed support from incident {}", userEmail, incidentId);
+        } else {
+            supporters.add(userEmail);
+            log.info("User {} added support for incident {}", userEmail, incidentId);
+            
+            try {
+                User user = userRepository.findByEmail(userEmail);
+                if (user != null) {
+                    gamificationService.rewardPoints(user.getId(), "COMMUNITY_SUPPORT", incidentId);
+                }
+            } catch (Exception e) {
+                log.warn("Gamification warning: Failed to reward points to {} for support", userEmail, e);
+            }
+        }
+
+        incident.setSupportedBy(supporters);
+        incident.setSupportCount(supporters.size());
+        incident.setUpdatedAt(System.currentTimeMillis());
+        incidentRepository.save(incident);
+
+        return mapToIncidentResponse(incident);
     }
 
     private IncidentResponse mapToIncidentResponse(Incident incident) {

@@ -23,4 +23,13 @@ public interface IncidentService {
      * @return List of IncidentResponses.
      */
     List<IncidentResponse> getAllIncidents();
+
+    /**
+     * Toggles support (upvote) for an incident by a user email.
+     *
+     * @param incidentId Unique incident UUID.
+     * @param userEmail Email of the user toggling support.
+     * @return Updated IncidentResponse payload.
+     */
+    IncidentResponse toggleSupport(String incidentId, String userEmail);
 }

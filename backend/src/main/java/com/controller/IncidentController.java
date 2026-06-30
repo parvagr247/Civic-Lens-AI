@@ -143,6 +143,21 @@ public class IncidentController {
     }
 
     /**
+     * Toggles support (upvote) for a specific incident.
+     */
+    @PostMapping("/{id}/support")
+    public ResponseEntity<ApiResponse<IncidentResponse>> toggleSupport(@PathVariable String id) {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("REST: Toggle support for incident {} by user {}", id, email);
+        IncidentResponse response = incidentService.toggleSupport(id, email);
+        return ResponseEntity.ok(ApiResponse.success(
+                response,
+                "Incident support status updated successfully.",
+                HttpStatus.OK.value()
+        ));
+    }
+
+    /**
      * Retrieves detail information of a specific incident.
      */
     @GetMapping("/{id}")

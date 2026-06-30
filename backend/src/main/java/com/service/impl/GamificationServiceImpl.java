@@ -57,6 +57,9 @@ public class GamificationServiceImpl implements GamificationService {
             case "COMMUNITY_FEEDBACK":
                 pointsToAward = 15;
                 break;
+            case "COMMUNITY_SUPPORT":
+                pointsToAward = 5;
+                break;
             case "ISSUE_RESOLVED":
                 pointsToAward = 50;
                 profile.setReportsResolved(profile.getReportsResolved() + 1);

@@ -72,12 +72,23 @@ public class FirebaseStorageServiceImpl implements StorageService {
         try {
             log.info("Uploading file to path: {}", blobPath);
             byte[] bytes = file.getBytes();
-            Blob blob = storageBucket.create(blobPath, bytes, file.getContentType());
             
-            // Construct Alt Media download link (Standard Firebase format)
-            String publicUrl = String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media",
+            // Generate a secure, unique download token
+            String downloadToken = UUID.randomUUID().toString();
+            
+            // Upload to Google Cloud Storage setting the firebase token metadata
+            com.google.cloud.storage.BlobId blobId = com.google.cloud.storage.BlobId.of(storageBucket.getName(), blobPath);
+            com.google.cloud.storage.BlobInfo blobInfo = com.google.cloud.storage.BlobInfo.newBuilder(blobId)
+                    .setContentType(file.getContentType())
+                    .setMetadata(java.util.Collections.singletonMap("firebaseStorageDownloadTokens", downloadToken))
+                    .build();
+            storageBucket.getStorage().create(blobInfo, bytes);
+            
+            // Construct Alt Media download link with download token (Standard Firebase format)
+            String publicUrl = String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
                     storageBucket.getName(),
-                    URLEncoder.encode(blobPath, StandardCharsets.UTF_8.name()));
+                    URLEncoder.encode(blobPath, StandardCharsets.UTF_8.name()),
+                    downloadToken);
             
             log.info("File uploaded successfully. URL: {}", publicUrl);
             return ImageUploadResult.builder()

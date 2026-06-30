@@ -4,7 +4,7 @@ import '../styles/auth/Auth.css';
 import { login } from '../services/authService';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Shield, Sparkles, Loader2, Mail, Lock } from 'lucide-react';
+import { Shield, Sparkles, Loader2, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useToast } from '../components/ui/ToastProvider';
 
 /**
@@ -57,6 +57,15 @@ export default function Login() {
       {/* Visual background lights */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* Back to Home Link */}
+      <Link 
+        to="/" 
+        className="absolute top-6 left-6 flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-emerald-400 transition-colors duration-200 bg-slate-900/40 backdrop-blur-sm border border-slate-850 px-3.5 py-2 rounded-xl z-20"
+      >
+        <ArrowLeft size={14} />
+        Back to Home
+      </Link>
 
       <Card className="w-full max-w-md p-6 bg-slate-900/50 backdrop-blur-md border-slate-800 shadow-2xl relative z-10 space-y-6">
         

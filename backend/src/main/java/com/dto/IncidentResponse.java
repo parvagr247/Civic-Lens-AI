@@ -28,6 +28,8 @@ public class IncidentResponse {
     private Integer reopenCount;
     private String citizenFeedback;
     private String citizenReopenPhotoUrl;
+    private Integer supportCount;
+    private java.util.List<String> supportedBy;
     private Long closedAt;
     private Long createdAt;
     private Long updatedAt;
@@ -53,6 +55,8 @@ public class IncidentResponse {
                 .reopenCount(incident.getReopenCount())
                 .citizenFeedback(incident.getCitizenFeedback())
                 .citizenReopenPhotoUrl(incident.getCitizenReopenPhotoUrl())
+                .supportCount(incident.getSupportCount() != null ? incident.getSupportCount() : 0)
+                .supportedBy(incident.getSupportedBy() != null ? incident.getSupportedBy() : new java.util.ArrayList<>())
                 .closedAt(incident.getClosedAt())
                 .createdAt(incident.getCreatedAt())
                 .updatedAt(incident.getUpdatedAt())

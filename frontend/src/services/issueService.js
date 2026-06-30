@@ -95,3 +95,12 @@ export const overrideIncident = (id, payload) => {
   return api.put(`/api/issues/${id}/override`, payload);
 };
 
+/**
+ * Toggles support (upvote) status for an incident.
+ * @param {string} id Incident UUID.
+ * @returns {Promise<Object>} Updated incident response.
+ */
+export const toggleIncidentSupport = (id) => {
+  return api.post(`/api/issues/${id}/support`);
+};
+

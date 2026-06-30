@@ -29,6 +29,8 @@ public class Incident {
     private String citizenFeedback;
     private String citizenReopenPhotoUrl;
     private String trackingId; // e.g. CL-2026-X8392
+    private Integer supportCount;
+    private java.util.List<String> supportedBy;
     private Long closedAt;
     private Long createdAt;
     private Long updatedAt;

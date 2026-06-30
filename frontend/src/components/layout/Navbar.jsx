@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Sun, Moon, Server, Database, Brain, Activity, Bell, User, LogOut, Bookmark, Shield, CheckCircle, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Sun, Moon, Server, Database, Brain, Activity, Bell, User, LogOut, Bookmark, Shield, CheckCircle, X, HelpCircle, Settings } from 'lucide-react';
 import api from '../../services/api';
 import { getNotifications, markAllAsRead, markAsRead, deleteNotification, deleteAllNotifications } from '../../services/notificationService';
-import { getCurrentUser, logout } from '../../services/authService';
+import { getCurrentUser, logout, isAdmin } from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/ToastProvider';
@@ -183,20 +184,22 @@ const Navbar = () => {
         <div className="flex items-center gap-4">
           
           {/* Health Badges */}
-          <div className="hidden md:flex items-center gap-3 text-[10px] font-bold">
-            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border ${getStatusColor(health.backend)}`}>
-              <Server className="w-3 h-3" />
-              <span>API: {health.backend}</span>
+          {currentUser && isAdmin() && (
+            <div className="hidden md:flex items-center gap-3 text-[10px] font-bold animate-fade-in">
+              <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border ${getStatusColor(health.backend)}`}>
+                <Server className="w-3 h-3" />
+                <span>API: {health.backend}</span>
+              </div>
+              <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border ${getStatusColor(health.firestore)}`}>
+                <Database className="w-3 h-3" />
+                <span>DB: {health.firestore}</span>
+              </div>
+              <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border ${getStatusColor(health.gemini)}`}>
+                <Brain className="w-3 h-3" />
+                <span>AI: {health.gemini}</span>
+              </div>
             </div>
-            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border ${getStatusColor(health.firestore)}`}>
-              <Database className="w-3 h-3" />
-              <span>DB: {health.firestore}</span>
-            </div>
-            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border ${getStatusColor(health.gemini)}`}>
-              <Brain className="w-3 h-3" />
-              <span>AI: {health.gemini}</span>
-            </div>
-          </div>
+          )}
 
           {/* Theme Switcher */}
           <button
@@ -320,30 +323,57 @@ const Navbar = () => {
               </button>
 
               {showProfileMenu && (
-                <div className="absolute right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 shadow-2xl z-50 w-52 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="px-2.5 py-1 border-b border-slate-200 dark:border-slate-850 pb-2">
-                    <span className="block text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{currentUser.name}</span>
-                    <span className="block text-[9px] text-slate-450 dark:text-slate-500 truncate mt-0.5">{currentUser.email}</span>
+                <div className="absolute right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 shadow-2xl z-50 w-56 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="px-2.5 py-1.5 border-b border-slate-200 dark:border-slate-850 pb-2.5 flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-500 text-slate-955 flex items-center justify-center font-bold text-xs shrink-0 shadow-md">
+                      {currentUser.name?.substring(0, 2).toUpperCase() || 'US'}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block text-xs font-bold text-slate-800 dark:text-slate-200 truncate leading-tight">{currentUser.name}</span>
+                      <span className="block text-[9px] text-slate-450 dark:text-slate-500 truncate mt-0.5 leading-none">{currentUser.email}</span>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-0.5">
+                    <button 
+                      onClick={() => { setShowProfileMenu(false); navigate(`/profile/${currentUser.userId || ''}`); }}
+                      className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-slate-650 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-white rounded-lg w-full text-left"
+                    >
+                      <User size={13} className="text-slate-400" />
+                      My Profile
+                    </button>
+                    <button 
+                      onClick={() => { setShowProfileMenu(false); navigate('/dashboard'); }}
+                      className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-slate-650 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-white rounded-lg w-full text-left"
+                    >
+                      <Bookmark size={13} className="text-slate-400" />
+                      My Reports
+                    </button>
                     <button 
                       onClick={() => { setShowProfileMenu(false); navigate('/settings'); }}
-                      className="flex items-center gap-2.5 p-2 text-xs font-semibold text-slate-650 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-white rounded-lg w-full text-left"
+                      className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-slate-650 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-white rounded-lg w-full text-left"
                     >
-                      <User size={13} />
-                      Edit Profile
+                      <Settings size={13} className="text-slate-400" />
+                      Settings
                     </button>
                     <button 
-                      onClick={() => { setShowProfileMenu(false); navigate('/risk-intelligence'); }}
-                      className="flex items-center gap-2.5 p-2 text-xs font-semibold text-slate-650 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-white rounded-lg w-full text-left"
+                      onClick={() => { setShowProfileMenu(false); navigate('/track'); }}
+                      className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-slate-650 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-white rounded-lg w-full text-left"
                     >
-                      <Bookmark size={13} />
-                      Saved Reports
+                      <HelpCircle size={13} className="text-slate-400" />
+                      Help & Support
                     </button>
+                    <button 
+                      onClick={() => { setShowProfileMenu(false); navigate('/settings?tab=privacy'); }}
+                      className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-slate-650 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-white rounded-lg w-full text-left"
+                    >
+                      <Shield size={13} className="text-slate-400" />
+                      Privacy Policy
+                    </button>
+                    <div className="h-[1px] bg-slate-200 dark:bg-slate-850 my-1" />
                     <button 
                       onClick={() => { setShowProfileMenu(false); setShowLogoutModal(true); }}
-                      className="flex items-center gap-2.5 p-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-350 rounded-lg w-full text-left"
+                      className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-455 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-700 dark:hover:text-rose-350 rounded-lg w-full text-left"
                     >
                       <LogOut size={13} />
                       Sign Out
@@ -358,19 +388,25 @@ const Navbar = () => {
       </div>
 
       {/* Logout confirmation overlay modal */}
-      {showLogoutModal && (
-        <div className="fixed inset-0 bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center animate-scale-in">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Sign Out Confirmation</h3>
-            <p className="text-xs text-slate-550 dark:text-slate-400 leading-relaxed font-semibold">Are you sure you want to end your active session and sign out of CivicLens AI?</p>
+      {showLogoutModal && createPortal(
+        <div className="fixed inset-0 bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center animate-scale-in relative overflow-hidden">
+            {/* Ambient indicator accent line */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 to-rose-500" />
+            
+            {/* Warning Icon */}
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/40">
+              <LogOut className="w-5 h-5 animate-pulse" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Sign Out</h3>
+              <p className="text-xs text-slate-550 dark:text-slate-400 leading-relaxed font-semibold">
+                Are you sure you want to end your active session and sign out of CivicLens AI? You'll need to log back in to access your reports.
+              </p>
+            </div>
             
             <div className="flex gap-3 pt-2">
-              <Button
-                onClick={handleLogoutConfirm}
-                className="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs py-2 shadow-sm active:scale-95"
-              >
-                Sign Out
-              </Button>
               <Button
                 onClick={() => setShowLogoutModal(false)}
                 variant="outline"
@@ -378,9 +414,16 @@ const Navbar = () => {
               >
                 Cancel
               </Button>
+              <Button
+                onClick={handleLogoutConfirm}
+                className="flex-1 bg-gradient-to-r from-rose-600 to-red-500 hover:from-rose-500 hover:to-red-400 text-white font-bold rounded-xl text-xs py-2 shadow-sm active:scale-95 border-0"
+              >
+                Sign Out
+              </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </header>
