@@ -95,18 +95,18 @@ export default function ImageUploader({ selectedFile, onFileSelect, onFileRemove
       )}
 
       <div
-        className={`relative group cursor-pointer border-2 border-dashed rounded-xl transition-all duration-300 flex flex-col items-center justify-center p-6 ${
+        className={`relative group border-2 border-dashed rounded-xl transition-all duration-300 flex flex-col items-center justify-center p-6 ${
           selectedFile
             ? 'border-emerald-500/50 bg-emerald-50/20 dark:bg-emerald-950/10'
             : dragActive
-            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 scale-[0.99]'
-            : 'border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40 hover:border-emerald-500 dark:hover:border-slate-600 hover:bg-gray-100/50 dark:hover:bg-slate-900/60'
+            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 scale-[0.99] cursor-pointer'
+            : 'border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40 hover:border-emerald-500 dark:hover:border-slate-600 hover:bg-gray-100/50 dark:hover:bg-slate-900/60 cursor-pointer'
         }`}
         onDragEnter={handleDrag}
         onDragOver={handleDrag}
         onDragLeave={handleDrag}
         onDrop={handleDrop}
-        onClick={triggerFileSelect}
+        onClick={selectedFile ? undefined : triggerFileSelect}
       >
         <input
           ref={fileInputRef}
@@ -117,30 +117,33 @@ export default function ImageUploader({ selectedFile, onFileSelect, onFileRemove
         />
 
         {selectedFile ? (
-          <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700 aspect-video flex items-center justify-center bg-gray-100 dark:bg-slate-950">
-            {hasLoadError ? (
-              <div className="flex flex-col items-center justify-center p-6 text-center text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-900 w-full h-full rounded-lg">
+          <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700 aspect-video flex items-center justify-center bg-gray-100 dark:bg-slate-950" onClick={(e) => e.stopPropagation()}>
+            {hasLoadError && (
+              <div className="flex flex-col items-center justify-center p-6 text-center text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-900 w-full h-full rounded-lg absolute inset-0 z-0">
                 <AlertCircle size={24} className="text-rose-500 mb-2" />
                 <span className="text-xs font-bold">Failed to load preview</span>
                 <span className="text-[10px] text-gray-400 dark:text-slate-500 mt-1">Please try another image file</span>
               </div>
-            ) : (
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="max-w-full max-h-full object-contain"
-                onError={(e) => {
-                  // Only trigger error state if the source matches our current active preview URL
-                  if (previewUrl && e.target.src === previewUrl) {
-                    setHasLoadError(true);
-                  }
-                }}
-              />
             )}
+            
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className={`max-w-full max-h-full object-contain z-10 ${hasLoadError ? 'opacity-0 invisible' : 'opacity-100 visible'}`}
+              onLoad={() => {
+                setHasLoadError(false);
+              }}
+              onError={(e) => {
+                if (previewUrl && e.target.src === previewUrl) {
+                  setHasLoadError(true);
+                }
+              }}
+            />
+            
             <button
               type="button"
               onClick={handleRemove}
-              className="absolute top-2 right-2 p-1.5 bg-gray-900/80 dark:bg-slate-950/80 hover:bg-rose-600 text-white dark:text-slate-300 rounded-full transition-all duration-200"
+              className="absolute top-2 right-2 p-1.5 bg-gray-900/80 dark:bg-slate-950/80 hover:bg-rose-600 text-white dark:text-slate-300 rounded-full transition-all duration-205 z-20 shadow-md"
               title="Remove Image"
             >
               <XCircle size={18} />
