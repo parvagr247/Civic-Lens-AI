@@ -65,6 +65,32 @@ export default function LocationInput({ latitude, longitude, address, onChange }
     );
   };
 
+  const handleAddressGeocode = async (addrVal) => {
+    if (!addrVal || addrVal.trim().length < 5) return;
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addrVal)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'CivicLensAI/1.0',
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
+          onChange('latitude', lat);
+          onChange('longitude', lon);
+          toast('Address resolved to coordinates successfully!', 'success');
+        }
+      }
+    } catch (error) {
+      console.warn('Geocoding lookup failed', error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -122,7 +148,16 @@ export default function LocationInput({ latitude, longitude, address, onChange }
               type="button"
               onClick={() => {
                 setInsecureWarning(false);
-                toast('Please enter coordinates and address manually below.', 'info');
+                if (latitude === '' || latitude === null || !latitude) {
+                  onChange('latitude', 45.5152);
+                }
+                if (longitude === '' || longitude === null || !longitude) {
+                  onChange('longitude', -122.6784);
+                }
+                if (!address) {
+                  onChange('address', 'Portland, OR');
+                }
+                toast('Manual entry enabled. Fallback coordinates populated.', 'info');
               }}
               className="text-xs bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-700 px-4 py-2 rounded-lg font-semibold shadow-sm transition-all duration-200"
             >
@@ -132,7 +167,16 @@ export default function LocationInput({ latitude, longitude, address, onChange }
               type="button"
               onClick={() => {
                 setInsecureWarning(false);
-                toast('Continuing without automatic location.', 'info');
+                if (latitude === '' || latitude === null || !latitude) {
+                  onChange('latitude', 45.5152);
+                }
+                if (longitude === '' || longitude === null || !longitude) {
+                  onChange('longitude', -122.6784);
+                }
+                if (!address) {
+                  onChange('address', 'Portland, OR');
+                }
+                toast('Continuing with default location coordinates.', 'info');
               }}
               className="text-xs bg-transparent hover:bg-gray-100 dark:hover:bg-slate-850 text-gray-500 dark:text-slate-400 px-4 py-2 rounded-lg font-medium transition-all duration-200"
             >
@@ -174,6 +218,7 @@ export default function LocationInput({ latitude, longitude, address, onChange }
           placeholder="e.g. 5th Avenue and 34th Street, New York"
           value={address || ''}
           onChange={(e) => onChange('address', e.target.value)}
+          onBlur={(e) => handleAddressGeocode(e.target.value)}
           className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-200 px-3.5 py-2 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-gray-400 dark:placeholder-slate-600 transition-all duration-200 shadow-sm"
         />
       </div>
