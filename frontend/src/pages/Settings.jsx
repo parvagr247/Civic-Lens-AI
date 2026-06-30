@@ -84,7 +84,7 @@ export default function Settings() {
   // Developer/Admin States
   const [adminModel, setAdminModel] = useState('gemini-2.5-flash');
   const [adminTemp, setAdminTemp] = useState(0.2);
-  const [firebasePath, setFirebasePath] = useState('classpath:firebase-service-account.json');
+  const [firebasePath, setFirebasePath] = useState('Application Default Credentials (ADC)');
   const [logVerbosity, setLogVerbosity] = useState('INFO');
 
   const [loadingProfile, setLoadingProfile] = useState(false);
